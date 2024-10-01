@@ -1,0 +1,24 @@
+# Git
+.gitignore.swp
+
+# IDEs
+.spyproject
+.vscode
+.idea
+
+# Docker compose
+/pgdata
+/logs
+/plugins
+/venv
+.env
+
+# Python
+**/__pycache__
+**/*.pyc
+.pytest*
+
+helper.txt
+.flake8
+.pre-commit-config.yaml
+pytest.ini
