@@ -8,7 +8,7 @@ spec:
   ignore: "\n\t\t# exclude all\n\t\t/*\n\t\t# include pprod directory\n\t\t!/pprod\n\t\t"
   interval: 10m0s
   ref:
-    branch: k8s
+    branch: main
   url: https://github.com/OpenSourcePolitics/airflow-orchestration
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
