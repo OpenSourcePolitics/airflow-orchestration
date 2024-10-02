@@ -11,6 +11,19 @@ spec:
     branch: main
   url: https://github.com/OpenSourcePolitics/airflow-orchestration
 ---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: airflow
+  namespace: data-pprod
+spec:
+  prune: false
+  interval: 10m0s
+  path: ./pprod
+  sourceRef:
+    kind: GitRepository
+    name: airflow
+---
 apiVersion: source.toolkit.fluxcd.io/v1beta1
 kind: HelmRepository
 metadata:
