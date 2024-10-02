@@ -1,0 +1,24 @@
+images:
+  airflow:
+    repository: jeanlouislamezec/airflow_test
+    tag: v1
+ingress:
+  web:
+    annotations:
+      kubernetes.io/tls-acme: "true"
+    enabled: true
+    hosts:
+    - pprod.airflow.k8s.osp.cat
+    tls:
+      enabled: true
+      secretName: pprod-airflow-tls
+workers:
+  persistence:
+    size: 10Gi
+triggerer:
+  persistence:
+    size: 10Gi
+postgresql:
+  enabled: false
+data:
+  metadataSecretName: airflow-connection-string
