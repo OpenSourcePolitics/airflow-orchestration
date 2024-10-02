@@ -43,3 +43,9 @@ Check image tag:
 ```
 k edit po airflow-worker-0
 ```
+
+## force sync
+
+```
+flux -n data-pprod reconcile source git airflow
+```
