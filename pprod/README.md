@@ -49,3 +49,7 @@ k edit po airflow-worker-0
 ```
 flux -n data-pprod reconcile source git airflow
 ```
+
+## Code de la chart helm
+
+https://github.com/airflow-helm/charts/tree/main/charts/airflow
