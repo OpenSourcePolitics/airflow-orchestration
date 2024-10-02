@@ -1,0 +1,7 @@
+apiVersion: core.libre.sh/v1alpha1
+kind: Postgres
+metadata:
+  name: airflow
+  namespace: data-pprod
+spec:
+  database: airflow
