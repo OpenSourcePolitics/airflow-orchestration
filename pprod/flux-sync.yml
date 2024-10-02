@@ -17,6 +17,7 @@ metadata:
   name: airflow
   namespace: data-pprod
 spec:
+  prune: false
   interval: 10m0s
   path: ./pprod
   sourceRef:
