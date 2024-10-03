@@ -2,6 +2,8 @@ import pendulum
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from data_utils.matomo_pull.matomo_helper import fetch_and_dump_data
+from data_utils.alerting.alerting import send_webhook_alert
+
 
 matomo_site_id = 3
 matomo_db_name = "airflow_db_test"
@@ -19,6 +21,7 @@ with DAG(
         python_callable=fetch_and_dump_data,
         op_args=[f"{matomo_site_id}", f"{matomo_db_name}"],
         dag=dag,
+        on_failure_callback=send_webhook_alert,
     )
 
     fetch_matomo_data
