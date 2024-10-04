@@ -22,3 +22,5 @@ helper.txt
 .flake8
 .pre-commit-config.yaml
 pytest.ini
+
+/tmp/*
