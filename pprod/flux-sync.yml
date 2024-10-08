@@ -55,7 +55,7 @@ spec:
       gitSync:
         enabled: true
         repo: "https://github.com/OpenSourcePolitics/airflow-dags"
-        branch: "main"  # Or you can use `refs/tags/v1.0.0` for a specific tag
+        branch: "main"
         revision: "HEAD"
         subPath: "dags"
         wait: true
