@@ -1,0 +1,87 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: airflow
+  namespace: data-prod
+spec:
+  ignore: "\n\t\t# exclude all\n\t\t/*\n\t\t# include prod directory\n\t\t!/prod\n\t\t"
+  interval: 10m0s
+  ref:
+    branch: main
+  url: https://github.com/OpenSourcePolitics/airflow-orchestration
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: airflow
+  namespace: data-prod
+spec:
+  prune: false
+  interval: 10m0s
+  path: ./prod
+  sourceRef:
+    kind: GitRepository
+    name: airflow
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: HelmRepository
+metadata:
+  name: apache-airflow
+  namespace: data-prod
+spec:
+  interval: 24h
+  url: https://airflow.apache.org
+  timeout: 3m
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: airflow
+  namespace: data-prod
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: airflow
+      version: 1.15.0
+      sourceRef:
+        kind: HelmRepository
+        name: apache-airflow
+        namespace: data-prod
+      interval: 15m
+  values:
+    dags:
+      gitSync:
+        enabled: true
+        repo: "https://github.com/your-repo/airflow-dags"
+        branch: "main"
+        revision: "refs/tags/{latest_tag}" # Replace with the latest tag dynamically
+        subPath: "dags"
+        wait: true
+        maxFailures: 3
+        refreshInterval: 60  # Sync interval in seconds
+    images:
+      airflow:
+        repository: jeanlouislamezec/airflow_test
+        tag: v1
+    ingress:
+      web:
+        annotations:
+          kubernetes.io/tls-acme: "true"
+        enabled: true
+        hosts:
+        - airflow.k8s.osp.cat
+        tls:
+          enabled: true
+          secretName: airflow-tls
+    workers:
+      persistence:
+        size: 10Gi
+    triggerer:
+      persistence:
+        size: 10Gi
+    postgresql:
+      enabled: false
+    data:
+      metadataSecretName: airflow-connection-string
