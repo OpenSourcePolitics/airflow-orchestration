@@ -51,6 +51,16 @@ spec:
         namespace: data-pprod
       interval: 15m
   values:
+    dags:
+      gitSync:
+        enabled: true
+        repo: "https://github.com/OpenSourcePolitics/airflow-dags"
+        branch: "main"
+        revision: "HEAD"
+        subPath: "dags"
+        wait: true
+        maxFailures: 3
+        refreshInterval: 60  # Sync interval in seconds
     images:
       airflow:
         repository: jeanlouislamezec/airflow_test
