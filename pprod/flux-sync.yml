@@ -1,39 +1,3 @@
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
-metadata:
-  name: airflow
-  namespace: data-pprod
-spec:
-  ignore: "\n\t\t# exclude all\n\t\t/*\n\t\t# include pprod directory\n\t\t!/pprod\n\t\t"
-  interval: 10m0s
-  ref:
-    branch: main
-  url: https://github.com/OpenSourcePolitics/airflow-orchestration
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: airflow
-  namespace: data-pprod
-spec:
-  prune: false
-  interval: 10m0s
-  path: ./pprod
-  sourceRef:
-    kind: GitRepository
-    name: airflow
----
-apiVersion: source.toolkit.fluxcd.io/v1beta1
-kind: HelmRepository
-metadata:
-  name: apache-airflow
-  namespace: data-pprod
-spec:
-  interval: 24h
-  url: https://airflow.apache.org
-  timeout: 3m
----
 apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
 metadata:
@@ -53,14 +17,14 @@ spec:
   values:
     dags:
       gitSync:
+        branch: main
         enabled: true
-        repo: "https://github.com/OpenSourcePolitics/airflow-dags"
-        branch: "main"
-        revision: "HEAD"
-        subPath: "dags"
-        wait: true
         maxFailures: 3
-        refreshInterval: 60  # Sync interval in seconds
+        repo: https://github.com/OpenSourcePolitics/airflow-dags
+        subPath: dags
+        wait: 30  # Adjusted to integer type
+    data:
+      metadataSecretName: airflow-connection-string
     images:
       airflow:
         repository: jeanlouislamezec/airflow_test
@@ -71,17 +35,15 @@ spec:
           kubernetes.io/tls-acme: "true"
         enabled: true
         hosts:
-        - pprod.airflow.k8s.osp.cat
+          - pprod.airflow.k8s.osp.cat
         tls:
           enabled: true
           secretName: pprod-airflow-tls
-    workers:
-      persistence:
-        size: 10Gi
+    postgresql:
+      enabled: false
     triggerer:
       persistence:
         size: 10Gi
-    postgresql:
-      enabled: false
-    data:
-      metadataSecretName: airflow-connection-string
+    workers:
+      persistence:
+        size: 10Gi
