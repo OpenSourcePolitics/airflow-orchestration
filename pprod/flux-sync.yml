@@ -64,7 +64,7 @@ spec:
     images:
       airflow:
         repository: jeanlouislamezec/airflow_test
-        tag: v1
+        tag: v2
     ingress:
       web:
         annotations:
