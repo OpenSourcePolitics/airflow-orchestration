@@ -5,10 +5,6 @@ from .matomo_request_config import matomo_requests_config
 from .matomo_postgres_dump import get_postgres_connection, clean_data_in_postgres, dump_data_to_postgres
 from .matomo_url import get_matomo_base_url, construct_url
 
-
-START_DATE = '2024-09-01'  # Specify the start date
-END_DATE = '2024-09-23'    # Specify the end date
-
 # Initialize HTTP manager
 http = urllib3.PoolManager()
 
@@ -48,7 +44,7 @@ def fetch_data_for_day(base_url, report_name, config, day):
             print(f"Unexpected data format for {report_name} on {day}: {type(raw_data)}")
             return pd.DataFrame()
         # Add the date field to each row
-        data['date'] = day
+        data['date'] = pd.to_datetime(day)
         return data
 
     except Exception as e:
@@ -56,9 +52,9 @@ def fetch_data_for_day(base_url, report_name, config, day):
         raise Exception(error_message)
 
     # Fetch data from Matomo for each day in the date range and merge into a single DataFrame
-def fetch_data_from_matomo(base_url, report_name, config):
+def fetch_data_from_matomo(base_url, report_name, config, start_date, end_date):
     """Fetches data from Matomo for each day in the specified range and merges it into a single DataFrame."""
-    date_range = pd.date_range(start=START_DATE, end=END_DATE).strftime('%Y-%m-%d').tolist()
+    date_range = pd.date_range(start=start_date, end=end_date).strftime('%Y-%m-%d').tolist()
     all_data = [fetch_data_for_day(base_url, report_name, config, day) for day in date_range]
 
     # Combine all non-empty DataFrames into a single DataFrame
@@ -70,7 +66,10 @@ def fetch_data_from_matomo(base_url, report_name, config):
         raise Exception(error_message)
 
 # Main function to fetch and dump data
-def fetch_and_dump_data(matomo_site_id, database):
+def fetch_and_dump_data(matomo_site_id, database, day):
+
+    start_date = (pd.to_datetime(day) - pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+    end_date = start_date
     base_url = get_matomo_base_url(matomo_site_id)
     connection = get_postgres_connection(database)
 
@@ -80,11 +79,11 @@ def fetch_and_dump_data(matomo_site_id, database):
 
     for report_name, config in matomo_requests_config.items():
         print(f"Fetching data for {report_name}...")
-        data = fetch_data_from_matomo(base_url, report_name, config)
+        data = fetch_data_from_matomo(base_url, report_name, config, start_date, end_date)
 
         if data is not None and not data.empty:
             # Clean existing data in the table before dumping new data
-            clean_data_in_postgres(connection, report_name, START_DATE, END_DATE)
+            clean_data_in_postgres(connection, report_name, start_date, end_date)
             # Dump fetched data into PostgreSQL
             dump_data_to_postgres(connection, data, report_name)
         else:

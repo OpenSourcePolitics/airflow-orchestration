@@ -5,7 +5,8 @@ def get_matomo_base_url(matomo_site_id):
     connection = BaseHook.get_connection('matomo_host_connection')
     host = connection.host
     token = connection.password
-    return f"{host}index.php?module=API&format=JSON&token_auth={token}&idSite={matomo_site_id}"
+    url = f"{host}index.php?module=API&format=JSON&token_auth={token}&idSite={matomo_site_id}"
+    return url
 
 
 #  Function to construct the URL for API calls for a specific day
