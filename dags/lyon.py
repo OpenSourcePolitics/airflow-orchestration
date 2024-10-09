@@ -12,7 +12,7 @@ with DAG(
         dag_id='lyon',
         default_args={'owner': 'airflow'},
         schedule='@daily',
-        start_date=pendulum.datetime(2024, 1, 1, tz="UTC"),
+        start_date=pendulum.datetime(2024, 10, 1, tz="UTC"),
         catchup=True
 ) as dag:
 
