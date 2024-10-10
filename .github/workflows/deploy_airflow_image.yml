@@ -1,0 +1,21 @@
+name: Push a new version of Airflow image
+
+on:
+  push:
+    tags:
+      - 'airflow-v*.*.*'
+
+jobs:
+
+  build_and_push_image:
+    name: Build and push image to Registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: OpenSourcePolitics/build-and-push-images-action@master
+        with:
+          registry: ${{ vars.REGISTRY_ENDPOINT }}
+          namespace: ${{ vars.REGISTRY_NAMESPACE }}
+          password: ${{ secrets.TOKEN }}
+          image_name: ${{ vars.IMAGE_NAME }}
+          tag: ${{ github.ref }}
+
