@@ -57,6 +57,7 @@ spec:
         repo: https://github.com/OpenSourcePolitics/airflow-orchestration
         branch: main
         subPath: dags
+        revision: "refs/tags/{latest_tag}"
         wait: 30
     images:
       airflow:

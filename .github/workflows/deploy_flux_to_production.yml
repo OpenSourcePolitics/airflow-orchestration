@@ -1,0 +1,19 @@
+name: Tag Promotion
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update Flux configuration
+        run: |
+          sed -i "s/tag: .*/tag: ${{ github.ref }}/" prod/flux-sync.yml
+          git add prod/flux-sync.ym l
+          git commit -m "Update to latest tag ${{ github.ref }}"
+          git push origin main
