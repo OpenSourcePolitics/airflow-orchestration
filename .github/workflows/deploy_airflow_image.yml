@@ -15,7 +15,7 @@ jobs:
         with:
           registry: ${{ vars.REGISTRY_ENDPOINT }}
           namespace: ${{ vars.REGISTRY_NAMESPACE }}
-          password: ${{ secrets.TOKEN }}
+          password: ${{ secrets.DATA_PROD_DOCKER_SCW_TOKEN }}
           image_name: ${{ vars.IMAGE_NAME }}
           tag: ${{ github.ref }}
 
