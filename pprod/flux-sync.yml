@@ -82,5 +82,3 @@ spec:
       enabled: false
     data:
       metadataSecretName: airflow-connection-string
-    config:
-      AIRFLOW__WEBSERVER__BASE_URL: "https://pprod.airflow.k8s.osp.cat/"
