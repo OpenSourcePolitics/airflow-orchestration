@@ -54,13 +54,10 @@ spec:
     dags:
       gitSync:
         enabled: true
-        repo: "https://github.com/your-repo/airflow-dags"
-        branch: "main"
-        revision: "refs/tags/{latest_tag}" # Replace with the latest tag dynamically
-        subPath: "dags"
-        wait: true
-        maxFailures: 3
-        refreshInterval: 60  # Sync interval in seconds
+        repo: https://github.com/OpenSourcePolitics/airflow-orchestration
+        branch: main
+        subPath: dags
+        wait: 30
     images:
       airflow:
         repository: jeanlouislamezec/airflow_test
