@@ -51,6 +51,10 @@ spec:
         namespace: data-pprod
       interval: 15m
   values:
+    logs:
+      persistence:
+        enabled: true
+        size: 1Gi
     dags:
       gitSync:
         enabled: true
