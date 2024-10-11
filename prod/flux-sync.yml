@@ -51,6 +51,12 @@ spec:
         namespace: data-prod
       interval: 15m
   values:
+    createUserJob:
+      useHelmHooks: false
+      applyCustomEnv: false
+    migrateDatabaseJob:
+      useHelmHooks: false
+      applyCustomEnv: false
     dags:
       gitSync:
         enabled: true
