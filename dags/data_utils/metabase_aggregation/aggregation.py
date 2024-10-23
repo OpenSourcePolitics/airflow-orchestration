@@ -58,7 +58,7 @@ def insert_data_to_aggregated_db(dataframe, target_database, target_table):
     try:
         connection = get_postgres_connection(db_cluster, target_database)
         clean_data_in_postgres(connection)
-        dataframe.to_sql(target_table, con=connection, if_exists='append', index=False)
+        dataframe.to_sql(target_table, con=connection, if_exists='replace', index=False)
         print(f"Data successfully inserted into {target_table} in {target_database}.")
         connection.close()
     except Exception as e:
@@ -67,11 +67,12 @@ def insert_data_to_aggregated_db(dataframe, target_database, target_table):
 
 
 def perform_and_insert_aggregated_data():
-    client_databases = ["lyon", "marseille", "toulouse"]
+    client_databases = ["lyon", "marseille", "toulouse", "grand_nancy"]
 
     # List of aggregation queries
     queries = {
-        'user_count': "SELECT COUNT(*) AS user_count FROM public.decidim_users;",
+        'user_count': "SELECT COUNT(*) AS user_count FROM prod.users;",
+        'participatory_process_count': "SELECT COUNT(*) AS participatory_process_count FROM public.decidim_participatory_processes;",
     }
 
     # Perform data aggregation for all clients
