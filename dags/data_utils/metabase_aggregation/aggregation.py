@@ -67,12 +67,14 @@ def insert_data_to_aggregated_db(dataframe, target_database, target_table):
 
 
 def perform_and_insert_aggregated_data():
-    client_databases = ["lyon", "marseille", "toulouse", "grand_nancy"]
+    client_databases = ["lyon", "marseille", "toulouse", "grand_nancy", "tours"]
 
     # List of aggregation queries
     queries = {
         'user_count': "SELECT COUNT(*) AS user_count FROM prod.users;",
-        'participatory_process_count': "SELECT COUNT(*) AS participatory_process_count FROM public.decidim_participatory_processes;",
+        'participating_user_count': "SELECT COUNT(*) AS participating_user_count FROM prod.users WHERE has_answered_survey OR is_endorsing OR is_following OR has_authored_comment OR has_authored_proposal OR has_voted_on_project OR has_voted_on_proposal;",
+        'participatory_process_count': "SELECT COUNT(*) AS participatory_process_count FROM prod.stg_decidim_participatory_processes;",
+        'participations_count': "SELECT COUNT(*) AS participations_count FROM prod.participations WHERE participation_type IS NOT NULL;",
     }
 
     # Perform data aggregation for all clients
