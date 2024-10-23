@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 
-from data_utils.metabase_aggregation.aggregation import perform_and_insert_aggregated_data
+from data_utils.metabase_aggregation.aggregation import perform_and_insert_aggregated_data, aggregate_by_date_task, aggregate_by_participation_type_task
 
 # Default arguments for the DAG tasks
 default_args = {
@@ -28,5 +28,19 @@ with DAG(
         python_callable=perform_and_insert_aggregated_data,
         op_kwargs={},
     )
+    aggregate_by_date_task = PythonOperator(
+        task_id='aggregate_by_date_task',
+        python_callable=aggregate_by_date_task,
+        op_kwargs={},
+    )
+    aggregate_by_participation_type_task = PythonOperator(
+        task_id='aggregate_by_participation_type_task',
+        python_callable=aggregate_by_participation_type_task,
+        op_kwargs={},
+    )
+
 
     aggregate_and_insert_task
+    aggregate_by_date_task
+    aggregate_by_participation_type_task
+    
