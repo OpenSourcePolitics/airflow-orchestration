@@ -51,13 +51,13 @@ spec:
         namespace: data-pprod
       interval: 15m
   values:
+    createUserJob:
+      useHelmHooks: false
+      applyCustomEnv: false
+    migrateDatabaseJob:
+      useHelmHooks: false
+      applyCustomEnv: false
     dags:
-      createUserJob:
-        useHelmHooks: false
-        applyCustomEnv: false
-      migrateDatabaseJob:
-        useHelmHooks: false
-        applyCustomEnv: false
       gitSync:
         enabled: true
         repo: https://github.com/OpenSourcePolitics/airflow-orchestration
