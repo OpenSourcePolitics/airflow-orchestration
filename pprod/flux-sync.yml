@@ -52,6 +52,12 @@ spec:
       interval: 15m
   values:
     dags:
+      createUserJob:
+        useHelmHooks: false
+        applyCustomEnv: false
+      migrateDatabaseJob:
+        useHelmHooks: false
+        applyCustomEnv: false
       gitSync:
         enabled: true
         repo: https://github.com/OpenSourcePolitics/airflow-orchestration
