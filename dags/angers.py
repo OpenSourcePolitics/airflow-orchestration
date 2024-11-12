@@ -25,7 +25,7 @@ with DAG(
         dag_id=f'{client_name}',  # Use city name for the DAG ID
         default_args={'owner': 'airflow'},
         schedule='0 2 * * *',
-        start_date=pendulum.today('UTC').add(days=-1),
+        start_date=pendulum.datetime(2024, 11, 11, tz="UTC"),
         on_failure_callback=task_failed
 ) as dag:
 
