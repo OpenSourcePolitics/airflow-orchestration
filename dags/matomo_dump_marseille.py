@@ -9,7 +9,7 @@ matomo_site_id = Variable.get("marseille_matomo_site_id")
 matomo_db_name = Variable.get("marseille_matomo_db_name")
 
 with DAG(
-        dag_id='marseille',
+        dag_id='matomo_dump_marseille',
         default_args={'owner': 'airflow'},
         schedule='@daily',
         start_date=pendulum.datetime(2024, 11, 4, tz="UTC"),

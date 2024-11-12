@@ -17,7 +17,7 @@ AIRBYTE_AIRFLOW_CONN_ID = 'airbyte_api'
 
 # DAG Configuration
 with DAG(
-        dag_id='grand_nancy',
+        dag_id='matomo_dump_grand_nancy',
         default_args={'owner': 'airflow'},
         schedule='@daily',
         start_date=pendulum.today('UTC').add(days=-1)
