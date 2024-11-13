@@ -6,7 +6,7 @@ from data_utils.matomo_pull.matomo_helper import fetch_and_dump_data
 from data_utils.alerting.alerting import task_failed
 
 matomo_site_id = Variable.get("cese_matomo_site_id")
-matomo_db_name = Variable.get("ceses_matomo_db_name")
+matomo_db_name = Variable.get("cese_matomo_db_name")
 
 with DAG(
         dag_id='matomo_dump_cese',
