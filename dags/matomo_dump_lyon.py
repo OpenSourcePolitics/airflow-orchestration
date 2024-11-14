@@ -11,7 +11,7 @@ matomo_db_name = Variable.get("lyon_matomo_db_name")
 with DAG(
         dag_id='matomo_dump_lyon',
         default_args={'owner': 'airflow'},
-        schedule='@daily',
+        schedule='55 0 * * *',
         start_date=pendulum.datetime(2024, 10, 1, tz="UTC"),
         catchup=True
 ) as dag:
