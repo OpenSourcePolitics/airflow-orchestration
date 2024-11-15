@@ -4,10 +4,12 @@ import pandas as pd
 from .matomo_request_config import matomo_requests_config
 from .matomo_postgres_dump import get_postgres_connection, clean_data_in_postgres, dump_data_to_postgres
 from .matomo_url import get_matomo_base_url, construct_url
+import logging
 
 # Initialize HTTP manager
 http = urllib3.PoolManager()
-
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("matomo_fetcher")
 
 def parse_range_data(raw_data):
     for entry in raw_data:
@@ -62,10 +64,10 @@ def fetch_data_from_matomo(base_url, report_name, config, start_date, end_date):
     if valid_data:
         return pd.concat(valid_data, ignore_index=True)
     else:
-        error_message = f"No data fetched for {report_name}."
-        raise Exception(error_message)
+        logger.warning(f"No data fetched for report '{report_name}' between {start_date} and {end_date}.")
+        return pd.DataFrame()
 
-# Main function to fetch and dump data
+    # Main function to fetch and dump data
 def fetch_and_dump_data(matomo_site_id, database, day):
 
     start_date = (pd.to_datetime(day) - pd.Timedelta(days=1)).strftime('%Y-%m-%d')
