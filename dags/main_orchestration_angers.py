@@ -7,12 +7,13 @@ from airflow.providers.airbyte.sensors.airbyte import AirbyteJobSensor
 from connections.airbyte.airbyte_connection_id_retriever import get_airbyte_connection_id
 from data_utils.alerting.alerting import task_failed
 from data_utils.github_helper import get_github_token, trigger_workflow
+
 # Get the GitHub token using the function
 github_token = get_github_token()
 
 # Retrieve environment and city name from Airflow Variables
 env = Variable.get("environment")
-client_name = "cdc"
+client_name = "angers"
 
 # Airbyte Connection IDs
 DECIDIM_AIRBYTE_CONNECTION_ID = get_airbyte_connection_id(f"[Decidim]-[{env.upper()}] - {client_name.capitalize()}")
@@ -21,9 +22,9 @@ AIRBYTE_AIRFLOW_CONN_ID = 'airbyte_api'
 
 # DAG Configuration
 with DAG(
-        dag_id=f'{client_name}',  # Use city name for the DAG ID
+        dag_id=f'main_orchestration_{client_name}',  # Use city name for the DAG ID
         default_args={'owner': 'airflow'},
-        schedule='15 2 * * *',
+        schedule=None,
         start_date=pendulum.datetime(2024, 11, 11, tz="UTC"),
         on_failure_callback=task_failed
 ) as dag:
