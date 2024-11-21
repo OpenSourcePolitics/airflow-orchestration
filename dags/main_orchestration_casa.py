@@ -12,7 +12,7 @@ github_token = get_github_token()
 
 # Retrieve environment and city name from Airflow Variables
 env = Variable.get("environment")
-client_name = "thionville"
+client_name = "casa"
 
 # Airbyte Connection IDs
 DECIDIM_AIRBYTE_CONNECTION_ID = get_airbyte_connection_id(f"[Decidim]-[{env.upper()}] - {client_name.capitalize()}")
@@ -21,9 +21,9 @@ AIRBYTE_AIRFLOW_CONN_ID = 'airbyte_api'
 
 # DAG Configuration
 with DAG(
-        dag_id=f'{client_name}',  # Use city name for the DAG ID
+        dag_id=f'main_orchestration_{client_name}',  # Use city name for the DAG ID
         default_args={'owner': 'airflow'},
-        schedule='15 4 * * *',
+        schedule=None,
         start_date=pendulum.datetime(2024, 11, 11, tz="UTC"),
         on_failure_callback=task_failed
 ) as dag:
