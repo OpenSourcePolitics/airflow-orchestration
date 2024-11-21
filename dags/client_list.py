@@ -1,0 +1,16 @@
+clients = [
+    "angers",
+    "casa",
+    "cdc",
+    "cea",
+    "cese",
+    "grand_nancy",
+    "lyon",
+    "marseille",
+    "meyzieu",
+    "sytral",
+    "thionville",
+    "toulouse",
+    "tours",
+    "valbonne",
+]

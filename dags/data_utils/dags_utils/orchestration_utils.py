@@ -33,7 +33,7 @@ def branch_on_dag_status(dag_id, **kwargs):
         return f"skip_{dag_id}"
 
 
-def create_orchestration_dag(dag_id, description, schedule_interval, start_date, client_dags):
+def create_orchestration_dag(dag_id, description, schedule_interval, start_date, dags_to_orchestrate):
     """
     Function to create an orchestration DAG dynamically.
 
@@ -41,7 +41,7 @@ def create_orchestration_dag(dag_id, description, schedule_interval, start_date,
     :param description: Description of the DAG
     :param schedule_interval: Schedule interval of the DAG
     :param start_date: Start date of the DAG
-    :param client_dags: List of DAGs to orchestrate
+    :param dags_to_orchestrate: List of DAGs to orchestrate
     :return: An Airflow DAG object
     """
     dag = DAG(
@@ -54,20 +54,20 @@ def create_orchestration_dag(dag_id, description, schedule_interval, start_date,
 
     previous_task = None
 
-    for client_dag_id in client_dags:
+    for dag_to_orchestrate_id in dags_to_orchestrate:
         # Branching task
         branch_task = BranchPythonOperator(
-            task_id=f'branch_{client_dag_id}',
+            task_id=f'branch_{dag_to_orchestrate_id}',
             python_callable=branch_on_dag_status,
-            op_kwargs={'dag_id': client_dag_id},
+            op_kwargs={'dag_id': dag_to_orchestrate_id},
             provide_context=True,
             dag=dag,
         )
 
         # Trigger task
         trigger_task = TriggerDagRunOperator(
-            task_id=f'trigger_{client_dag_id}',
-            trigger_dag_id=client_dag_id,
+            task_id=f'trigger_{dag_to_orchestrate_id}',
+            trigger_dag_id=dag_to_orchestrate_id,
             wait_for_completion=True,
             reset_dag_run=True,
             poke_interval=60,
@@ -76,14 +76,14 @@ def create_orchestration_dag(dag_id, description, schedule_interval, start_date,
 
         # Skip task
         skip_task = PythonOperator(
-            task_id=f'skip_{client_dag_id}',
-            python_callable=lambda: print(f"Skipping {client_dag_id}"),
+            task_id=f'skip_{dag_to_orchestrate_id}',
+            python_callable=lambda: print(f"Skipping {dag_to_orchestrate_id}"),
             dag=dag,
         )
 
         # Dummy task
         dummy_task = EmptyOperator(
-            task_id=f'dummy_{client_dag_id}',
+            task_id=f'dummy_{dag_to_orchestrate_id}',
             dag=dag,
             trigger_rule=TriggerRule.ALL_DONE
         )
