@@ -25,41 +25,65 @@ def create_main_orchestration_dag(client_name):
     )
     def main_orchestration():
         @task()
-        def trigger_airbyte_sync(sync_type):
+        def get_connection_id(sync_type):
+            """
+            Get Airbyte connection ID for a given sync type and client.
+            """
             connection_id = get_airbyte_connection_id(f"[{sync_type}]-[{env.upper()}] - {client_name.capitalize()}")
+            return connection_id
 
-            return AirbyteTriggerSyncOperator(
-                task_id=f'trigger_airbyte_{sync_type.lower()}_sync',
+        @task()
+        def trigger_airbyte_sync(connection_id):
+            """
+            Trigger an Airbyte sync and return the job ID.
+            """
+            operator = AirbyteTriggerSyncOperator(
+                task_id=f'trigger_airbyte_sync_{connection_id}',
                 airbyte_conn_id=airbyte_conn_id,
                 connection_id=connection_id,
                 asynchronous=True,
             )
+            # Execute the sync and return the job ID
+            operator.execute(context={})  # Directly execute the operator
+            return operator.job_id  # Assuming `job_id` is available after execution
 
         @task()
-        def wait_for_sync_completion(sync_type, trigger_output):
-            return AirbyteJobSensor(
-                task_id=f'wait_for_{sync_type.lower()}_sync_completion',
+        def wait_for_sync_completion(job_id):
+            """
+            Wait for Airbyte job completion.
+            """
+            sensor = AirbyteJobSensor(
+                task_id=f'wait_for_sync_completion_{job_id}',
                 airbyte_conn_id=airbyte_conn_id,
-                airbyte_job_id=trigger_output.output,
+                airbyte_job_id=job_id,
             )
+            # Directly execute the sensor
+            sensor.execute(context={})
 
         @task()
         def trigger_github_action():
+            """
+            Trigger a GitHub action for the client.
+            """
             trigger_workflow(f'{client_name}_models_run_{env}.yml', token=github_token)
 
         # Define the workflow
-        decidim_trigger = trigger_airbyte_sync("Decidim")
-        decidim_wait_for_sync_completion = wait_for_sync_completion("Decidim", decidim_trigger)
+        # Decidim sync
+        decidim_connection_id = get_connection_id("Decidim")
+        decidim_job_id = trigger_airbyte_sync(decidim_connection_id)
+        decidim_sync_done = wait_for_sync_completion(decidim_job_id)
 
-        matomo_trigger = trigger_airbyte_sync("Matomo")
-        matomo_wait_for_sync_completion = wait_for_sync_completion("Matomo", matomo_trigger)
+        # Matomo sync
+        matomo_connection_id = get_connection_id("Matomo")
+        matomo_job_id = trigger_airbyte_sync(matomo_connection_id)
+        matomo_sync_done = wait_for_sync_completion(matomo_job_id)
 
-        trigger_github_action = trigger_github_action()
-
-        decidim_trigger >> decidim_wait_for_sync_completion >> trigger_github_action
-        matomo_trigger >> matomo_wait_for_sync_completion >> trigger_github_action
+        # Trigger GitHub action after both syncs are complete
+        [decidim_sync_done, matomo_sync_done] >> trigger_github_action()
 
     return main_orchestration()
 
+
+# Dynamically generate DAGs for all clients
 for client in clients:
     globals()[f"main_orchestration_{client}"] = create_main_orchestration_dag(client_name=client)
