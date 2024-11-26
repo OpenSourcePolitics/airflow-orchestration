@@ -4,6 +4,7 @@ clients = [
     "cdc",
     "cea",
     "cese",
+    "colombes",
     "grand_nancy",
     "lyon",
     "marseille",
