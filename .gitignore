@@ -25,3 +25,4 @@ helper.txt
 pytest.ini
 
 /tmp/*
+.DS_Store
