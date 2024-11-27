@@ -10,6 +10,7 @@ clients = [
     "marseille",
     "montpellier"
     "meyzieu",
+    "real_deal",
     "sytral",
     "thionville",
     "toulouse",
