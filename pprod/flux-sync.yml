@@ -66,8 +66,8 @@ spec:
         wait: 30
     images:
       airflow:
-        repository: jeanlouislamezec/airflow_test
-        tag: v2
+        repository: rg.fr-par.scw.cloud/airflow-orchestration/airflow
+        tag: refs-tags-airflow-v1.1.0
     ingress:
       web:
         annotations:
