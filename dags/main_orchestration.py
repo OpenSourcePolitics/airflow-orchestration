@@ -24,62 +24,67 @@ def create_main_orchestration_dag(client_name):
         on_failure_callback=task_failed
     )
     def main_orchestration():
-        @task()
-        def get_connection_id(sync_type):
-            """
-            Get Airbyte connection ID for a given sync type and client.
-            """
-            connection_id = get_airbyte_connection_id(f"[{sync_type}]-[{env.upper()}] - {client_name.capitalize()}")
-            return connection_id
+        def get_connection_id_task(sync_type):
+            @task(task_id=f'get_connection_id_{sync_type.lower()}_{client_name}')
+            def get_connection_id():
+                """
+                Get Airbyte connection ID for a given sync type and client.
+                """
+                connection_id = get_airbyte_connection_id(f"[{sync_type}]-[{env.upper()}] - {client_name.capitalize()}")
+                return connection_id
 
-        @task()
-        def trigger_airbyte_sync(connection_id):
+            return get_connection_id
+
+        def trigger_airbyte_sync_task(sync_type, connection_id):
             """
-            Trigger an Airbyte sync and return the job ID.
+            Task to trigger Airbyte sync.
             """
-            operator = AirbyteTriggerSyncOperator(
-                task_id=f'trigger_airbyte_sync_{connection_id}',
+            return AirbyteTriggerSyncOperator(
+                task_id=f'trigger_airbyte_sync_{sync_type.lower()}_{client_name}',
                 airbyte_conn_id=airbyte_conn_id,
                 connection_id=connection_id,
-                asynchronous=True,
+                asynchronous=True,  # Run asynchronously
+                wait_seconds=10,
+                timeout=3600,
             )
-            # Execute the sync and return the job ID
-            operator.execute(context={})  # Directly execute the operator
-            return operator.job_id  # Assuming `job_id` is available after execution
 
-        @task()
-        def wait_for_sync_completion(job_id):
+            return trigger_airbyte_sync
+
+        def wait_for_sync_completion_task(sync_type, job_id):
             """
-            Wait for Airbyte job completion.
+            Task to wait for Airbyte job completion.
             """
-            sensor = AirbyteJobSensor(
-                task_id=f'wait_for_sync_completion_{job_id}',
+            return AirbyteJobSensor(
+                task_id=f'wait_for_sync_completion_{sync_type.lower()}_{client_name}',
                 airbyte_conn_id=airbyte_conn_id,
                 airbyte_job_id=job_id,
+                timeout=3600,
+                poke_interval=30,
             )
-            # Directly execute the sensor
-            sensor.execute(context={})
 
-        @task()
+        # Define GitHub action trigger
+        @task(task_id=f'trigger_github_action_{client_name}')
         def trigger_github_action():
             """
             Trigger a GitHub action for the client.
             """
             trigger_workflow(f'{client_name}_models_run_{env}.yml', token=github_token)
 
-        # Define the workflow
-        # Decidim sync
-        decidim_connection_id = get_connection_id("Decidim")
-        decidim_job_id = trigger_airbyte_sync(decidim_connection_id)
-        decidim_sync_done = wait_for_sync_completion(decidim_job_id)
 
-        # Matomo sync
-        matomo_connection_id = get_connection_id("Matomo")
-        matomo_job_id = trigger_airbyte_sync(matomo_connection_id)
-        matomo_sync_done = wait_for_sync_completion(matomo_job_id)
+        decidim_connection_id = get_connection_id_task("Decidim")()
+        decidim_sync = trigger_airbyte_sync_task("Decidim", decidim_connection_id)
+        wait_for_decidim_sync = wait_for_sync_completion_task("Decidim", decidim_sync.output)
 
-        # Trigger GitHub action after both syncs are complete
-        [decidim_sync_done, matomo_sync_done] >> trigger_github_action()
+        # Retrieve the connection ID for Matomo
+        matomo_connection_id = get_connection_id_task("Matomo")()
+        matomo_sync = trigger_airbyte_sync_task("Matomo", matomo_connection_id)
+        wait_for_matomo_sync = wait_for_sync_completion_task("Matomo", matomo_sync.output)
+
+        # Trigger GitHub action
+        github_action = trigger_github_action()
+
+        # Define dependencies
+        [wait_for_decidim_sync, wait_for_matomo_sync] >> github_action
 
     return main_orchestration()
 
