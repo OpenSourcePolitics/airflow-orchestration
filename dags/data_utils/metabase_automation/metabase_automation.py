@@ -164,10 +164,6 @@ def get_new_dashboard_id(collection_id, dashboard_name):
 
 
 def replace_dashboard_source_db(dashboard_id, new_db_id, schema_name):
-    if not dashboard_id.isdigit():
-        raise ValueError("The Dashboard ID must be a numeric value.")
-    dashboard_id = int(dashboard_id)
-
     dashboard = get_dashboard(dashboard_id)
 
     old_db_ids = get_all_db_ids(dashboard)
@@ -177,10 +173,6 @@ def replace_dashboard_source_db(dashboard_id, new_db_id, schema_name):
 
     old_db_id = old_db_ids[0]
     old_tables = get_tables_info(old_db_id)
-
-    if not new_db_id.isdigit():
-        raise ValueError("The Database ID must be a numeric value.")
-    new_db_id = int(new_db_id)
 
     if not schema_name:
         raise ValueError("Schema Name is required.")
@@ -207,16 +199,28 @@ def replace_dashboard_source_db(dashboard_id, new_db_id, schema_name):
         update_dashboard(dashboard_id, dashboard)
 
 
+def pin_dashboard_in_collection(dashboard_id, pinned=True):
+    """
+    Pin or unpin a dashboard in a collection.
+
+    Args:
+        dashboard_id (int): The ID of the dashboard.
+        pinned (bool): True to pin, False to unpin.
+    """
+    payload = {"pinned": pinned}
+    response = MTB.put(f'/api/dashboard/{dashboard_id}', json=payload)
+    logging.info(response)
+
+    if response.status_code == 200:
+        action = "pinned" if pinned else "unpinned"
+        print(f"Dashboard {dashboard_id} successfully {action}.")
+    else:
+        raise RuntimeError(f"Failed to update pin status for dashboard {dashboard_id}. "
+                           f"Error: {response.json()}")
+
+
 def dashboard_copy(dashboard_id, collection_id, dashboard_name):
     try:
-        if not dashboard_id.isdigit():
-            raise ValueError("Dashboard ID must be a numeric value.")
-        dashboard_id = int(dashboard_id)
-
-        if not collection_id.isdigit():
-            raise ValueError("Collection ID must be a numeric value.")
-        collection_id = int(collection_id)
-
         if not dashboard_name:
             raise ValueError("Dashboard Name is required.")
 
