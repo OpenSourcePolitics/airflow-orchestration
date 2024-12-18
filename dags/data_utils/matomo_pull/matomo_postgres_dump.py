@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, text
 from airflow.hooks.base import BaseHook
+from sqlalchemy import inspect
 
 
 def get_postgres_connection(database):
@@ -40,9 +41,59 @@ def clean_data_in_postgres(connection, table_name, start_date, end_date):
 
 # Dump DataFrame to PostgreSQL table
 def dump_data_to_postgres(connection, data, table_name):
-    """Dumps the DataFrame into the specified PostgreSQL table."""
+    """
+    Dumps the DataFrame into the specified PostgreSQL table, creating missing columns if necessary.
+
+    Parameters:
+    connection: SQLAlchemy engine or connection object
+        The connection to the PostgreSQL database.
+    data: pandas.DataFrame
+        The DataFrame containing the data to be dumped.
+    table_name: str
+        The name of the PostgreSQL table to insert the data into.
+    """
+
+    # Convert DataFrame columns to lowercase
+    data.columns = [col.lower() for col in data.columns]
+
     try:
+        # Inspect the existing columns in the table
+        inspector = inspect(connection)
+        existing_columns = []
+        if table_name in inspector.get_table_names():
+            existing_columns = [col['name'] for col in inspector.get_columns(table_name)]
+
+        # Normalize DataFrame columns to match PostgreSQL's column names
+        existing_columns = [col.lower() for col in existing_columns]
+
+        # Identify missing columns
+        missing_columns = set(data.columns) - set(existing_columns)
+
+        # Add missing columns to the table
+        for column in missing_columns:
+            dtype = data[column].dtype
+            if dtype == 'int64':
+                sql_type = 'INTEGER'
+            elif dtype == 'float64':
+                sql_type = 'FLOAT'
+            elif dtype == 'bool':
+                sql_type = 'BOOLEAN'
+            elif dtype == 'datetime64[ns]':
+                sql_type = 'TIMESTAMP'
+            else:
+                sql_type = 'TEXT'
+
+            alter_query = f'ALTER TABLE {table_name} ADD COLUMN {column} {sql_type};'
+            try:
+                connection.execute(alter_query)
+                print(f"Column added: {column} ({sql_type})")
+            except Exception as e:
+                print(f"Error adding column {column}: {e}")
+
+        # Insert the data into the table
         data.to_sql(table_name, connection, if_exists='append', index=False)
         print(f"Data for {table_name} dumped successfully into the table.")
+
     except Exception as e:
+        # Log the error if the data dump fails
         print(f"Failed to dump data into {table_name}: {e}")
