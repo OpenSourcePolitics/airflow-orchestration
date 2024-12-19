@@ -63,8 +63,6 @@ def dump_data_to_postgres(connection, data, table_name):
         if table_name in inspector.get_table_names():
             existing_columns = [col['name'] for col in inspector.get_columns(table_name)]
 
-        # Normalize DataFrame columns to match PostgreSQL's column names
-        existing_columns = [col.lower() for col in existing_columns]
 
         # Identify missing columns
         missing_columns = set(data.columns) - set(existing_columns)
