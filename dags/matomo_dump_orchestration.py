@@ -7,16 +7,17 @@ from data_utils.matomo_pull.matomo_helper import fetch_and_dump_data
 from data_utils.alerting.alerting import task_failed
 
 default_args = {"owner": "airflow"}
-default_start_date = pendulum.datetime(2024, 11, 1, tz="UTC")
+default_start_date = pendulum.datetime(2024, 1, 1, tz="UTC")
 
 def create_matomo_dump_dag(client_name):
     """Dynamically creates a DAG for fetching and dumping Matomo data."""
     @dag(
         dag_id=f"matomo_dump_{client_name}",
         default_args=default_args,
-        schedule=None,
+        schedule= "0 0 * * *",
         catchup=True,
-        start_date=default_start_date
+        start_date=default_start_date,
+        max_active_runs=1
     )
     def matomo_dump():
         matomo_site_id = Variable.get(f"{client_name}_matomo_site_id")
