@@ -5,7 +5,7 @@ import mysql.connector
 
 def clean_data_for_date(execution_date, **kwargs):
     """
-    Clean data for a specific day from Matomo tables and store cleaned idvisit for audit purposes.
+    Clean data for a specific day from Matomo tables and store cleaned idvisit and idaction_name for audit purposes.
     """
     date_to_clean = execution_date.strftime('%Y-%m-%d')
 
@@ -15,25 +15,28 @@ def clean_data_for_date(execution_date, **kwargs):
         user='*****',
         password='*****',
         database='******',
-        ssl_disabled = True
+        ssl_disabled=True
     )
     cursor = conn.cursor()
 
     try:
+        # Create table to store idvisit
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS bordeaux_log_visit (
                 idvisit BIGINT NOT NULL,
                 clean_date DATE NOT NULL,
                 PRIMARY KEY (idvisit)
             );
-        """)
+        """
+        )
 
+        # Insert idvisit for the given date
         cursor.execute(f"""
             INSERT INTO bordeaux_log_visit (idvisit, clean_date)
             SELECT idvisit, '{date_to_clean}'
             FROM matomo_log_visit
             WHERE DATE(visit_first_action_time) = '{date_to_clean}'
-              AND referer_url LIKE '%participation.bordeaux-metropole.fr%' 
+              AND referer_url LIKE '%bordeaux%'
               AND idsite = 23;
         """)
 
@@ -46,27 +49,66 @@ def clean_data_for_date(execution_date, **kwargs):
             print(f"No data to clean for {date_to_clean}.")
             return
 
+        # Create table to store idaction_name
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bordeaux_log_actions (
+                idaction_name BIGINT NOT NULL,
+                idvisit BIGINT NOT NULL,
+                PRIMARY KEY (idaction_name, idvisit)
+            );
+        """
+        )
+
+        # Insert idaction_name for the given idvisit
+        cursor.execute(f"""
+            INSERT INTO bordeaux_log_actions (idaction_name, idvisit)
+            SELECT idaction_name, idvisit
+            FROM matomo_log_link_visit_action
+            WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
+        """)
+
+        conn.commit()
+
+        # Count inserted rows in bordeaux_log_actions
+        cursor.execute(
+            "SELECT COUNT(*) FROM bordeaux_log_actions WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = %s);",
+            (date_to_clean,))
+        log_actions_count = cursor.fetchone()[0]
+        print(f"{log_actions_count} rows inserted into bordeaux_log_actions for date {date_to_clean}.")
+
+        # Clean matomo_log_link_visit_action
         cursor.execute(f"""
             DELETE FROM matomo_log_link_visit_action
             WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
         """)
 
+        # Clean matomo_log_conversion
         cursor.execute(f"""
             DELETE FROM matomo_log_conversion
             WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
         """)
 
+        # Clean matomo_log_visit
         cursor.execute(f"""
             DELETE FROM matomo_log_visit
             WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
         """)
 
+        # Clean matomo_log_conversion_item
         cursor.execute(f"""
             DELETE FROM matomo_log_conversion_item
             WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
         """)
 
-        print(f"Data cleaned successfully for {date_to_clean}. The IDs are stored in bordeaux_log_visit.")
+        # Clean matomo_log_action based on idaction_name
+        cursor.execute(f"""
+            DELETE FROM matomo_log_action
+            WHERE idaction_name IN (SELECT idaction_name FROM bordeaux_log_actions);
+        """)
+
+        conn.commit()
+
+        print(f"Data cleaned successfully for {date_to_clean}. The IDs are stored in bordeaux_log_visit and bordeaux_log_actions.")
 
     except Exception as e:
         print(f"Error cleaning data for {date_to_clean}: {e}")
@@ -74,7 +116,6 @@ def clean_data_for_date(execution_date, **kwargs):
     finally:
         cursor.close()
         conn.close()
-
 
 # Define the DAG
 default_args = {
