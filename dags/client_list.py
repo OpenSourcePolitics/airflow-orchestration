@@ -1,19 +1,26 @@
 clients = [
     "angers",
+    "arcueil",
+    "bagneux",
     "casa",
     "cdc",
     "cea",
     "cese",
+    "chambery",
     "colombes",
+    "cultuur_connect",
     "grand_nancy",
     "lyon",
+    "malakoff",
     "marseille",
     "montpellier",
     "meyzieu",
+    "nanterre",
     "real_deal",
     "sytral",
     "thionville",
     "toulouse",
     "tours",
-    "valbonne"
+    "valbonne",
+    "villeurbanne"
 ]
