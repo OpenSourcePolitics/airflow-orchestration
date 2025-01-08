@@ -3,7 +3,6 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 import mysql.connector
 
-
 def clean_data_for_date(execution_date, **kwargs):
     """
     Clean data for a specific day from Matomo tables and store cleaned idvisit and idaction_name for audit purposes.
@@ -12,12 +11,13 @@ def clean_data_for_date(execution_date, **kwargs):
 
     # MySQL connection setup
     conn = mysql.connector.connect(
-        host='******',
-        user='******',
-        password='******',
-        database='******',
+        host='*****',
+        user='*****',
+        password='*****',
+        database='*****',
         ssl_disabled=True
     )
+
     cursor = conn.cursor()
 
     try:
@@ -25,11 +25,9 @@ def clean_data_for_date(execution_date, **kwargs):
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS bordeaux_log_visit (
                 idvisit BIGINT NOT NULL,
-                clean_date DATE NOT NULL,
-                PRIMARY KEY (idvisit)
+                clean_date DATE NOT NULL
             );
-        """
-                       )
+        """)
 
         # Insert idvisit for the given date
         cursor.execute(f"""
@@ -53,47 +51,37 @@ def clean_data_for_date(execution_date, **kwargs):
         # Create table to store idaction
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS bordeaux_log_actions (
-                idaction_value BIGINT NOT NULL,
                 idvisit BIGINT NOT NULL,
+                idaction_value BIGINT NOT NULL,
                 idaction_type VARCHAR(50) NOT NULL,
-                PRIMARY KEY (idaction_value, idvisit, idaction_type)
+                clean_date DATE NOT NULL
             );
-        """
-                       )
-
-        # Insert idaction_name and idaction_url for the given idvisit
-        cursor.execute(f"""
-            INSERT IGNORE INTO bordeaux_log_actions (idaction_value, idvisit, idaction_type)
-            SELECT
-                idvisit,
-                idaction_value,
-                idaction_type
-            FROM (
-                SELECT 
-                    lva.idvisit, 
-                    lva.idaction_name AS idaction_value, 
-                    'idaction_name' AS idaction_type
-                FROM matomo_log_link_visit_action lva
-                JOIN bordeaux_log_visit blv ON lva.idvisit = blv.idvisit
-                WHERE blv.clean_date = '{date_to_clean}' AND lva.idaction_name IS NOT NULL
-            
-                UNION ALL
-            
-                SELECT 
-                    lva.idvisit, 
-                    lva.idaction_url AS idaction_value, 
-                    'idaction_url' AS idaction_type
-                FROM matomo_log_link_visit_action lva
-                JOIN bordeaux_log_visit blv ON lva.idvisit = blv.idvisit
-                WHERE blv.clean_date = '{date_to_clean}' AND lva.idaction_url IS NOT NULL
-            ) AS flattened_actions;
         """)
 
+        # List of columns to extract from matomo_log_link_visit_action
+        action_columns = [
+            'idaction_url_ref', 'idaction_name_ref', 'idaction_name', 'idaction_url',
+            'idaction_event_action', 'idaction_event_category', 'idaction_content_interaction',
+            'idaction_content_name', 'idaction_content_piece', 'idaction_content_target',
+            'idaction_product_cat', 'idaction_product_cat2', 'idaction_product_cat3', 'idaction_product_cat4',
+            'idaction_product_cat5', 'idaction_product_name', 'idaction_product_sku'
+        ]
+
+        # Loop through each column and insert data into bordeaux_log_actions
+        for column in action_columns:
+            action_type = column
+            cursor.execute(f"""
+                INSERT INTO bordeaux_log_actions (idvisit, idaction_value, idaction_type, clean_date)
+                SELECT DISTINCT idvisit, {column}, '{action_type}', '{date_to_clean}'
+                FROM matomo_log_link_visit_action 
+                WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}')
+                AND {column} IS NOT NULL;
+            """)
         conn.commit()
 
         # Count inserted rows in bordeaux_log_actions
         cursor.execute(
-            "SELECT COUNT(*) FROM bordeaux_log_actions WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = %s);",
+            "SELECT COUNT(*) FROM bordeaux_log_actions WHERE clean_date = %s;",
             (date_to_clean,))
         log_actions_count = cursor.fetchone()[0]
         print(f"{log_actions_count} rows inserted into bordeaux_log_actions for date {date_to_clean}.")
@@ -122,12 +110,13 @@ def clean_data_for_date(execution_date, **kwargs):
             WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
         """)
 
-        # Clean matomo_log_action based on idaction_name and idaction_url
+        # Clean matomo_log_action based on idaction_value with date filter
         cursor.execute(f"""
             DELETE FROM matomo_log_action
             WHERE idaction IN (
                 SELECT DISTINCT idaction_value
                 FROM bordeaux_log_actions
+                WHERE clean_date = '{date_to_clean}'
             );
         """)
 
@@ -142,7 +131,6 @@ def clean_data_for_date(execution_date, **kwargs):
     finally:
         cursor.close()
         conn.close()
-
 
 # Define the DAG
 default_args = {
