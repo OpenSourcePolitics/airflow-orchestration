@@ -3,6 +3,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 import mysql.connector
 
+
 def clean_data_for_date(execution_date, **kwargs):
     """
     Clean data for a specific day from Matomo tables and store cleaned idvisit and idaction_name for audit purposes.
@@ -28,7 +29,7 @@ def clean_data_for_date(execution_date, **kwargs):
                 PRIMARY KEY (idvisit)
             );
         """
-        )
+                       )
 
         # Insert idvisit for the given date
         cursor.execute(f"""
@@ -49,21 +50,39 @@ def clean_data_for_date(execution_date, **kwargs):
             print(f"No data to clean for {date_to_clean}.")
             return
 
-        # Create table to store idaction_name
+        # Create table to store idaction
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS bordeaux_log_actions (
-                idaction_name BIGINT NOT NULL,
+                idaction_value BIGINT NOT NULL,
                 idvisit BIGINT NOT NULL,
-                PRIMARY KEY (idaction_name, idvisit)
+                idaction_type VARCHAR(50) NOT NULL,
+                PRIMARY KEY (idaction_value, idvisit, idaction_type)
             );
         """
-        )
+                       )
 
-        # Insert idaction_name for the given idvisit
+        # Insert idaction_name and idaction_url for the given idvisit
         cursor.execute(f"""
-            INSERT INTO bordeaux_log_actions (idaction_name, idvisit)
-            SELECT idaction_name, idvisit
-            FROM matomo_log_link_visit_action
+            INSERT IGNORE INTO bordeaux_log_actions (idaction_value, idvisit, idaction_type)
+            SELECT 
+                idvisit,
+                idaction_value,
+                idaction_type
+            FROM (
+                SELECT 
+                    idvisit, 
+                    idaction_name AS idaction_value, 'idaction_name' AS idaction_type 
+                FROM matomo_log_link_visit_action 
+                WHERE idaction_name IS NOT NULL
+
+                UNION ALL
+
+                SELECT 
+                    idvisit, 
+                    idaction_url AS idaction_value, 'idaction_url' AS idaction_type 
+                FROM matomo_log_link_visit_action 
+                WHERE idaction_url IS NOT NULL
+            ) AS flattened_actions
             WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
         """)
 
@@ -100,15 +119,19 @@ def clean_data_for_date(execution_date, **kwargs):
             WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
         """)
 
-        # Clean matomo_log_action based on idaction_name
+        # Clean matomo_log_action based on idaction_name and idaction_url
         cursor.execute(f"""
             DELETE FROM matomo_log_action
-            WHERE idaction_name IN (SELECT idaction_name FROM bordeaux_log_actions);
+            WHERE idaction IN (
+                SELECT DISTINCT idaction_value
+                FROM bordeaux_log_actions
+            );
         """)
 
         conn.commit()
 
-        print(f"Data cleaned successfully for {date_to_clean}. The IDs are stored in bordeaux_log_visit and bordeaux_log_actions.")
+        print(
+            f"Data cleaned successfully for {date_to_clean}. The IDs are stored in bordeaux_log_visit and bordeaux_log_actions.")
 
     except Exception as e:
         print(f"Error cleaning data for {date_to_clean}: {e}")
@@ -116,6 +139,7 @@ def clean_data_for_date(execution_date, **kwargs):
     finally:
         cursor.close()
         conn.close()
+
 
 # Define the DAG
 default_args = {
