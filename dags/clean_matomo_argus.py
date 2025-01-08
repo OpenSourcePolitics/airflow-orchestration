@@ -12,9 +12,9 @@ def clean_data_for_date(execution_date, **kwargs):
 
     # MySQL connection setup
     conn = mysql.connector.connect(
-        host='*****',
-        user='*****',
-        password='*****',
+        host='******',
+        user='******',
+        password='******',
         database='******',
         ssl_disabled=True
     )
@@ -64,26 +64,29 @@ def clean_data_for_date(execution_date, **kwargs):
         # Insert idaction_name and idaction_url for the given idvisit
         cursor.execute(f"""
             INSERT IGNORE INTO bordeaux_log_actions (idaction_value, idvisit, idaction_type)
-            SELECT 
+            SELECT
                 idvisit,
                 idaction_value,
                 idaction_type
             FROM (
                 SELECT 
-                    idvisit, 
-                    idaction_name AS idaction_value, 'idaction_name' AS idaction_type 
-                FROM matomo_log_link_visit_action 
-                WHERE idaction_name IS NOT NULL
-
+                    lva.idvisit, 
+                    lva.idaction_name AS idaction_value, 
+                    'idaction_name' AS idaction_type
+                FROM matomo_log_link_visit_action lva
+                JOIN bordeaux_log_visit blv ON lva.idvisit = blv.idvisit
+                WHERE blv.clean_date = '{date_to_clean}' AND lva.idaction_name IS NOT NULL
+            
                 UNION ALL
-
+            
                 SELECT 
-                    idvisit, 
-                    idaction_url AS idaction_value, 'idaction_url' AS idaction_type 
-                FROM matomo_log_link_visit_action 
-                WHERE idaction_url IS NOT NULL
-            ) AS flattened_actions
-            WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
+                    lva.idvisit, 
+                    lva.idaction_url AS idaction_value, 
+                    'idaction_url' AS idaction_type
+                FROM matomo_log_link_visit_action lva
+                JOIN bordeaux_log_visit blv ON lva.idvisit = blv.idvisit
+                WHERE blv.clean_date = '{date_to_clean}' AND lva.idaction_url IS NOT NULL
+            ) AS flattened_actions;
         """)
 
         conn.commit()
@@ -145,7 +148,7 @@ def clean_data_for_date(execution_date, **kwargs):
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2024, 10, 1),
+    'start_date': datetime(2024, 10, 3),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
