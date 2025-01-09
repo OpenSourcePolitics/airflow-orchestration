@@ -1,10 +1,11 @@
 from sqlalchemy import text
-
+from client_list import clients
 from ..postgres.get_postgres_connection import get_postgres_connection
 import pandas as pd
 
 db_cluster_preprod = 'db_cluster_name_data'
 db_cluster_prod = 'db_cluster_name_data_prod'
+
 
 def execute_queries(connection, queries):
     """
@@ -85,7 +86,7 @@ def insert_data_to_aggregated_db(db_cluster, dataframe, target_database, target_
 
 
 def perform_and_insert_aggregated_data():
-    client_databases = ["angers", "cdc", "cea", "cese", "grand_nancy", "lyon", "marseille", "meyzieu", "sytral", "thionville", "toulouse", "tours", "valbonne"]
+    client_databases = clients
 
     # List of aggregation queries
     queries = {
@@ -96,7 +97,7 @@ def perform_and_insert_aggregated_data():
     }
 
     # Perform data aggregation for all clients
-    aggregated_data = aggregate_data_for_clients(db_cluster_prod, client_databases, queries)
+    aggregated_data = aggregate_data_for_clients(db_cluster_preprod, client_databases, queries)
 
     # Display the aggregated data (optional)
     print(aggregated_data.head(5))
@@ -108,7 +109,7 @@ def perform_and_insert_aggregated_data():
     insert_data_to_aggregated_db(db_cluster_preprod, aggregated_data, target_database, target_table)
 
 def aggregate_by_date_task():
-    client_databases = ["angers", "cdc", "cea", "cese", "grand_nancy", "lyon", "marseille", "meyzieu", "sytral", "thionville", "toulouse", "tours", "valbonne"]
+    client_databases = clients
     
     query = """
             SELECT 
@@ -121,11 +122,11 @@ def aggregate_by_date_task():
     target_database = "aggregated_client_data"
 
     target_table = "aggregate_by_date"
-    df = aggregate_data_for_clients_for_unique_query(db_cluster_prod, client_databases, query)
+    df = aggregate_data_for_clients_for_unique_query(db_cluster_preprod, client_databases, query)
     insert_data_to_aggregated_db(db_cluster_preprod, df, target_database, target_table)
 
 def aggregate_by_participation_type_task():
-    client_databases = ["angers", "cdc", "cea", "cese", "grand_nancy", "lyon", "marseille", "meyzieu", "sytral", "thionville", "toulouse", "tours", "valbonne"]
+    client_databases = clients
     
     query = """
             SELECT 
@@ -137,5 +138,22 @@ def aggregate_by_participation_type_task():
 
     target_database = "aggregated_client_data"
     target_table = "aggregate_by_participation_type"
-    df = aggregate_data_for_clients_for_unique_query(db_cluster_prod, client_databases, query)
+    df = aggregate_data_for_clients_for_unique_query(db_cluster_preprod, client_databases, query)
+    insert_data_to_aggregated_db(db_cluster_preprod, df, target_database, target_table)
+
+def aggregate_by_budgets_task():
+    client_databases = clients
+    
+    query = """
+            SELECT 
+                COUNT(*) as budget_count,
+                title
+            FROM prod.budgets
+            GROUP BY title
+            """
+
+    target_database = "aggregated_client_data"
+
+    target_table = "aggregate_by_budgets"
+    df = aggregate_data_for_clients_for_unique_query(db_cluster_preprod, client_databases, query)
     insert_data_to_aggregated_db(db_cluster_preprod, df, target_database, target_table)
