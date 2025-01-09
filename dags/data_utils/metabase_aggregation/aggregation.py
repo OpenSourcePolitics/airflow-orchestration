@@ -146,10 +146,14 @@ def aggregate_by_budgets_task():
     
     query = """
             SELECT 
-                COUNT(*) as budget_count,
-                title
-            FROM prod.budgets
-            GROUP BY title
+                budget_id AS id, 
+                title, 
+                project_amount AS amount,
+                is_selected,
+                categories
+            FROM prod.budgets_projects
+            GROUP BY budget_id, title, is_selected, resource_type, categories, project_amount
+            ORDER BY project_amount ASC
             """
 
     target_database = "aggregated_client_data"
