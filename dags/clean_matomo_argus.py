@@ -110,15 +110,6 @@ def clean_data_for_date(execution_date, **kwargs):
             WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
         """)
 
-        # Clean matomo_log_action based on idaction_value with date filter
-        cursor.execute(f"""
-            DELETE FROM matomo_log_action
-            WHERE idaction IN (
-                SELECT DISTINCT idaction_value
-                FROM bordeaux_log_actions
-                WHERE clean_date = '{date_to_clean}'
-            );
-        """)
 
         conn.commit()
 
@@ -136,7 +127,7 @@ def clean_data_for_date(execution_date, **kwargs):
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2024, 10, 3),
+    'start_date': datetime(2024, 9, 15),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
