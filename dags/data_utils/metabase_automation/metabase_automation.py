@@ -209,14 +209,17 @@ def pin_dashboard_in_collection(dashboard_id, pinned=True):
     """
     payload = {"pinned": pinned}
     response = MTB.put(f'/api/dashboard/{dashboard_id}', json=payload)
-    logging.info(response)
 
-    if response.status_code == 200:
+    # Debugging: Log the response
+    logging.info(f"Response from pin_dashboard_in_collection: {response}")
+
+    # Handle response properly
+    if isinstance(response, dict) and response.get("status") == 200:
         action = "pinned" if pinned else "unpinned"
         print(f"Dashboard {dashboard_id} successfully {action}.")
     else:
         raise RuntimeError(f"Failed to update pin status for dashboard {dashboard_id}. "
-                           f"Error: {response.json()}")
+                           f"Error: {response}")
 
 
 def dashboard_copy(dashboard_id, collection_id, dashboard_name):
