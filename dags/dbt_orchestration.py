@@ -38,6 +38,9 @@ def create_dbt_orchestration_dag(client_name):
     return dbt_orchestration()
 
 
-# Dynamically generate DAGs for all clients
-for client in clients:
-    globals()[f"dbt_orchestration_{client}"] = create_dbt_orchestration_dag(client_name=client)
+enabled = Variable.get("dbt_orchestration_enabled")
+
+if enabled == "True":
+    # Dynamically generate DAGs for all clients
+    for client in clients:
+        globals()[f"dbt_orchestration_{client}"] = create_dbt_orchestration_dag(client_name=client)
