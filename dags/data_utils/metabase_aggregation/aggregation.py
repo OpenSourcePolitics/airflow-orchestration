@@ -145,19 +145,20 @@ def aggregate_by_budgets_task():
     client_databases = clients
     
     query = """
-            SELECT 
+            SELECT
                 budget_id AS id, 
                 title, 
                 project_amount AS amount,
                 is_selected,
-                categories
+                categories,
+				components.ps_title
             FROM prod.budgets_projects
-            GROUP BY budget_id, title, is_selected, resource_type, categories, project_amount
+			LEFT JOIN prod.components ON budgets_projects.decidim_component_id = components.id
+            GROUP BY budget_id, title, is_selected, resource_type, categories, project_amount, ps_title
             ORDER BY project_amount ASC
             """
 
     target_database = "aggregated_client_data"
-
     target_table = "aggregate_by_budgets"
     df = aggregate_data_for_clients_for_unique_query(db_cluster_preprod, client_databases, query)
     insert_data_to_aggregated_db(db_cluster_preprod, df, target_database, target_table)
