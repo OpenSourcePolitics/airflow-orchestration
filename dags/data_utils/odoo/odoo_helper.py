@@ -6,17 +6,7 @@ from airflow.hooks.base import BaseHook
 import pandas as pd
 
 
-connection = BaseHook.get_connection('odoo_connection')
-url = connection.host
-api_key = connection.password
-user_mail = connection.login
-db = connection.schema
-
-common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
-uid = common.authenticate(db, user_mail, api_key, {})
-
-
-def fetch_invoices(models):
+def fetch_invoices(models, db, uid, api_key):
     """
     Fetch invoices with the required fields and conditions.
     """
@@ -50,7 +40,7 @@ def fetch_invoices(models):
     return invoices_to_keep
 
 
-def fetch_lines(models, invoice):
+def fetch_lines(models, invoice, db, uid, api_key):
     """
     Fetch accounting lines for a given invoice.
     """
@@ -62,13 +52,13 @@ def fetch_lines(models, invoice):
     )
 
 
-def process_invoices(models, invoices_to_keep):
+def process_invoices(models, invoices_to_keep, db, uid, api_key):
     """
     Process invoices, fetch lines, update field and return the data for DataFrame.
     """
     data = []
     for invoice in invoices_to_keep:
-        move_lines = fetch_lines(models, invoice)
+        move_lines = fetch_lines(models, invoice, db, uid, api_key)
         for line in move_lines:
             try:
                 if line['account_id']:
@@ -108,7 +98,7 @@ def process_invoices(models, invoices_to_keep):
 
     return pd.DataFrame(data)
 
-def mark_csv_as_generated_in_odoo(models, invoices_to_keep):
+def mark_csv_as_generated_in_odoo(models, invoices_to_keep, db, uid, api_key):
     for invoice in invoices_to_keep:
         # Update x_studio_boolean_field_24i_1ii6rf2v6 to True for processed invoices
         models.execute_kw(
@@ -156,8 +146,17 @@ def export_csv_and_send_webhook(df):
 
 
 def odoo_invoices_automation_helper():
+    connection = BaseHook.get_connection('odoo_connection')
+    url = connection.host
+    api_key = connection.password
+    user_mail = connection.login
+    db = connection.schema
+
+    common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
+    uid = common.authenticate(db, user_mail, api_key, {})
+
     models = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object')
-    invoices_to_keep = fetch_invoices(models)
-    df = process_invoices(models, invoices_to_keep)
+    invoices_to_keep = fetch_invoices(models, db, uid, api_key)
+    df = process_invoices(models, invoices_to_keep, db, uid, api_key)
     export_csv_and_send_webhook(df)
-    mark_csv_as_generated_in_odoo(models, invoices_to_keep)
+    mark_csv_as_generated_in_odoo(models, invoices_to_keep, db, uid, api_key)
