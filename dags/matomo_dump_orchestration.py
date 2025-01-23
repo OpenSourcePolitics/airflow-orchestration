@@ -16,7 +16,8 @@ def create_matomo_dump_dag(client_name):
         default_args=default_args,
         schedule=None,
         catchup=False,
-        start_date=default_start_date
+        start_date=default_start_date,
+        max_active_runs=1
     )
     def matomo_dump():
         matomo_site_id = Variable.get(f"{client_name}_matomo_site_id")
