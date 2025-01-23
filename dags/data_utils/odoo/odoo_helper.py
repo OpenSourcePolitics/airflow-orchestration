@@ -105,10 +105,15 @@ def process_invoices(models, invoices_to_keep):
                 'Debit': line['debit'],  # Debit amount from the accounting line
                 'Credit': line['credit'],  # Credit amount from the accounting line
             })
-        # Update x_studio_boolean_field_24i_1ii6rf2v6 to True for processed invoices
-        models.execute_kw(db, uid, api_key, 'account.move', 'write', [[invoice['id']], {'x_studio_boolean_field_24i_1ii6rf2v6': True}])
 
     return pd.DataFrame(data)
+
+def mark_csv_as_generated_in_odoo(models, invoices_to_keep):
+    for invoice in invoices_to_keep:
+        # Update x_studio_boolean_field_24i_1ii6rf2v6 to True for processed invoices
+        models.execute_kw(
+            db, uid, api_key, 'account.move', 'write', [[invoice['id']], {'x_studio_boolean_field_24i_1ii6rf2v6': True}]
+        )
 
 
 def export_csv_and_send_webhook(df):
@@ -155,3 +160,4 @@ def odoo_invoices_automation_helper():
     invoices_to_keep = fetch_invoices(models)
     df = process_invoices(models, invoices_to_keep)
     export_csv_and_send_webhook(df)
+    mark_csv_as_generated_in_odoo(models, invoices_to_keep)
