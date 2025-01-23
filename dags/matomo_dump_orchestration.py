@@ -15,7 +15,7 @@ def create_matomo_dump_dag(client_name):
         dag_id=f"matomo_dump_{client_name}",
         default_args=default_args,
         schedule=None,
-        catchup=True,
+        catchup=False,
         start_date=default_start_date
     )
     def matomo_dump():
