@@ -63,7 +63,7 @@ spec:
         repo: https://github.com/OpenSourcePolitics/airflow-orchestration
         branch: main
         subPath: dags
-        wait: 30
+        wait: 120
     images:
       airflow:
         repository: rg.fr-par.scw.cloud/airflow-orchestration/airflow
