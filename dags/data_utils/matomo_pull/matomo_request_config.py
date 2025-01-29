@@ -16,5 +16,10 @@ matomo_requests_config = {
     'visits_number_of_page_per_visit': {'method': 'VisitorInterest.getNumberOfVisitsPerPage', 'format_metrics': 1},
     'visits_per_number_of_visits': {'method': 'VisitorInterest.getNumberOfVisitsByVisitCount', 'format_metrics': 1},
     'visits_per_returning_time': {'method': 'VisitorInterest.getNumberOfVisitsByDaysSinceLast', 'format_metrics': 1},
-    'device_type': {'method': 'DevicesDetection.getType', 'format_metrics': 1}
+    'device_type': {'method': 'DevicesDetection.getType', 'format_metrics': 1},
+    'campaign_names': {'method': 'MarketingCampaignsReporting.getName', 'flat': 1, 'expanded': 1},
+    'campaign_keywords': {'method': 'MarketingCampaignsReporting.getKeyword', 'flat': 1},
+    'campaign_sources': {'method': 'MarketingCampaignsReporting.getSource', 'flat': 1},
+    'campaign_mediums': {'method': 'MarketingCampaignsReporting.getMedium', 'flat': 1},
+    'campaign_source_medium': {'method': 'MarketingCampaignsReporting.getSourceMedium', 'flat': 1, 'expanded': 1}
 }
