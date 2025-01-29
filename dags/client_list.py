@@ -12,6 +12,7 @@ clients = [
     "cultuur_connect",
     "grand_nancy",
     "lyon",
+    "loire_atlantique",
     "malakoff",
     "marseille",
     "mel",
