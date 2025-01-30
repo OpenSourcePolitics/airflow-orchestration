@@ -58,9 +58,6 @@ spec:
       useHelmHooks: false
       applyCustomEnv: false
     dags:
-      persistence:
-        enabled: true
-        size: 500Mi
       gitSync:
         enabled: true
         repo: https://github.com/OpenSourcePolitics/airflow-orchestration
