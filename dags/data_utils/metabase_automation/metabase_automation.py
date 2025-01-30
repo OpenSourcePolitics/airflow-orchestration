@@ -139,28 +139,31 @@ def update_dashboard(dashboard_id, dashboard):
         logging.error(f"Failed to update dashboard {dashboard_id}")
 
 
-def get_new_dashboard_id(collection_id, dashboard_name):
+def get_new_dashboard_id(sub_collection_id, dashboard_name):
     """
     Retrieve the ID of the newly created dashboard in a specific collection by its name.
 
     Args:
-        collection_id (int): The ID of the collection where the dashboard is copied.
+        sub_collection_id (int): The ID of the collection where the dashboard is copied.
         dashboard_name (str): The name of the dashboard to locate.
 
     Returns:
         int: The ID of the dashboard if found, otherwise raises an exception.
     """
     # Fetch all dashboards in the specified collection
-    dashboards = MTB.get(f'/api/dashboard/', params={'collection_id': collection_id})
+    dashboards = MTB.get(f'/api/dashboard/', params={'collection_id': sub_collection_id})
     if not dashboards:
-        raise RuntimeError(f"No dashboards found in collection {collection_id}.")
+        raise RuntimeError(f"No dashboards found in collection {sub_collection_id}.")
 
     # Search for the dashboard by name
     for dashboard in dashboards:
-        if dashboard['name'] == dashboard_name:
+        if dashboard['name'] == dashboard_name and dashboard['collection_id'] == sub_collection_id:
+            logging.info(
+                f"Found new dashboard {dashboard['name']} with id {dashboard['id']} in collection {sub_collection_id}."
+            )
             return dashboard['id']
 
-    raise RuntimeError(f"Dashboard with name '{dashboard_name}' not found in collection {collection_id}.")
+    raise RuntimeError(f"Dashboard with name '{dashboard_name}' not found in collection {sub_collection_id}.")
 
 
 def replace_dashboard_source_db(dashboard_id, new_db_id, schema_name):
@@ -214,7 +217,7 @@ def pin_dashboard_in_collection(dashboard_id, pinned=True):
     logging.info(f"Response from pin_dashboard_in_collection: {response}")
 
     # Handle response properly
-    if isinstance(response, dict) and response.get("status") == 200:
+    if response and response == 200:
         action = "pinned" if pinned else "unpinned"
         print(f"Dashboard {dashboard_id} successfully {action}.")
     else:

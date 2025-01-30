@@ -7,6 +7,7 @@ from data_utils.metabase_automation.metabase_automation import (
     MTB,
     get_all_db_ids, pin_dashboard_in_collection
 )
+import logging
 
 default_args = {
     'owner': 'airflow',
@@ -22,6 +23,7 @@ def get_collection_id_by_name(collection_name):
     collections = MTB.get('/api/collection/')
     for collection in collections:
         if collection['name'] == collection_name:
+            logging.info(f'Found collection: {collection["name"]} and ID: {collection["id"]}')
             return collection['id']
     raise RuntimeError(f"Collection with name '{collection_name}' not found.")
 
@@ -73,34 +75,32 @@ def copy_dashboard_task(**kwargs):
 
     # Get the collection ID by name
     sub_collection_id = get_sub_collection_id_by_name(collection_id, sub_collection_name)
+    logging.info(f'sub_collection_id is {sub_collection_id}')
 
     # Copy the dashboard
     dashboard_copy(dashboard_id, sub_collection_id, dashboard_name)
 
     # Get the new dashboard ID
-    new_db_id = get_new_dashboard_id(collection_id, dashboard_name)
+    new_dashboard_id = get_new_dashboard_id(sub_collection_id, dashboard_name)
 
-    pin_dashboard_in_collection(new_db_id)
+    pin_dashboard_in_collection(new_dashboard_id)
 
-    return new_db_id
+    return new_dashboard_id
 
 
 def update_dashboard_database_task(**kwargs):
     """
     Update the database source of the copied dashboard.
     """
-    dashboard_name = kwargs['dashboard_name']
-    collection_name = kwargs['collection_name']
     schema_name = kwargs['schema_name']
+    database_id = kwargs['database_id']
 
     # Get the new dashboard ID
     new_dashboard_id = kwargs['ti'].xcom_pull(task_ids='copy_dashboard')
-
-    # Get the database ID from the "Tableau de bord général" dashboard
-    new_db_id = get_database_id_from_dashboard(dashboard_name, collection_name)
+    print(f'New dashboard ID: {new_dashboard_id}')
 
     # Update the dashboard
-    replace_dashboard_source_db(new_dashboard_id, new_db_id, schema_name)
+    replace_dashboard_source_db(new_dashboard_id, database_id, schema_name)
 
 
 with DAG(
@@ -127,9 +127,8 @@ with DAG(
         task_id='update_dashboard_database',
         python_callable=update_dashboard_database_task,
         op_kwargs={
-            'collection_name': "Marseille",  # Name of the collection containing the general dashboard
-            'dashboard_name': "Tableau de bord global 🌍",  # Name of the copied dashboard
             'schema_name': 'prod',  # Schema to use for the new database
+            'database_id': 165,  # Schema to use for the new database
         },
         provide_context=True  # Enable XCom access
     )
