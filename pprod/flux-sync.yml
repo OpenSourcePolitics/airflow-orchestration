@@ -67,6 +67,7 @@ spec:
         branch: main
         subPath: dags
         wait: 300
+        maxFailures: 3
     images:
       airflow:
         repository: rg.fr-par.scw.cloud/airflow-orchestration/airflow
