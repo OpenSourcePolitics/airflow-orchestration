@@ -27,14 +27,14 @@ def fetch_invoices(models, db, uid, api_key):
         {'fields': [
             'id', 'name', 'move_type', 'partner_id', 'invoice_date',
             'invoice_date_due', 'create_date', 'line_ids',
-            'status_in_payment', 'x_studio_boolean_field_24i_1ii6rf2v6'
+            'status_in_payment', 'x_studio_csv_gnr'
         ]}
     )
 
     # Filter invoices to keep only those with specific conditions
     invoices_to_keep = [
         invoice for invoice in invoices
-        if invoice['status_in_payment'] not in ['draft', 'blocked', 'cancel'] and invoice['x_studio_boolean_field_24i_1ii6rf2v6'] == False
+        if invoice['status_in_payment'] not in ['draft', 'blocked', 'cancel'] and invoice['x_studio_csv_gnr'] == False
     ]
 
     return invoices_to_keep
@@ -57,10 +57,12 @@ def process_invoices(models, invoices_to_keep, db, uid, api_key):
     Process invoices, fetch lines, update field and return the data for DataFrame.
     """
     data = []
+    code = None
     for invoice in invoices_to_keep:
         move_lines = fetch_lines(models, invoice, db, uid, api_key)
         for line in move_lines:
             try:
+                # If no account_id, do nothing
                 if line['account_id']:
                     account_information = line['account_id'][1]
                     code = account_information.split(" ", 1)[0]
@@ -71,38 +73,43 @@ def process_invoices(models, invoices_to_keep, db, uid, api_key):
                             line['account_id'][1].split(" ", 1)[1]
                             if " " in line['account_id'][1] else line['account_id'][1]
                         )
-                else:
-                    account_name = "Unknown"
+
+                    # Determine type (Invoice or Refund)
+                    if 'invoice' in invoice['move_type']:
+                        type_facture = f"Facture - {invoice['partner_id'][1]}"
+                    elif 'refund' in invoice['move_type']:
+                        type_facture = f"Avoir - {invoice['partner_id'][1]}"
+                    else:
+                        type_facture = 'Inconnu'
+
+                    # Append processed data
+                    data.append({
+                        'Journal': 'VTE',  # Fixed journal name, e.g., "VTE" for sales
+                        'Date': invoice['invoice_date'],  # Invoice date, when the invoice was issued
+                        'N piece': invoice['name'],  # Invoice number or unique identifier
+                        'Code': code,  # Account code extracted from the account details
+                        'Libelle Compte': account_name,  # Account name or client name based on account logic
+                        'Libelle': type_facture,
+                        # Invoice type (e.g., "Invoice - Client Name" or "Credit Note - Client Name")
+                        'Debit': line['debit'],  # Debit amount from the accounting line
+                        'Credit': line['credit'],  # Credit amount from the accounting line
+                    })
             except Exception as e:
                 raise Exception(f"Error processing account_id: {e}")
 
-            # Determine type (Invoice or Refund)
-            if 'invoice' in invoice['move_type']:
-                type_facture = f"Facture - {invoice['partner_id'][1]}"
-            elif 'refund' in invoice['move_type']:
-                type_facture = f"Avoir - {invoice['partner_id'][1]}"
-            else:
-                type_facture = 'Inconnu'
+    # Convert data into DataFrame
+    df = pd.DataFrame(data)
 
-            # Append processed data
-            data.append({
-                'Journal': 'VTE',  # Fixed journal name, e.g., "VTE" for sales
-                'Date': invoice['invoice_date'],  # Invoice date, when the invoice was issued
-                'N piece': invoice['name'],  # Invoice number or unique identifier
-                'Code': code,  # Account code extracted from the account details
-                'Libelle Compte': account_name,  # Account name or client name based on account logic
-                'Libelle': type_facture,  # Invoice type (e.g., "Invoice - Client Name" or "Credit Note - Client Name")
-                'Debit': line['debit'],  # Debit amount from the accounting line
-                'Credit': line['credit'],  # Credit amount from the accounting line
-            })
+    # Convert 'Date' column from yyyy-mm-dd to dd/mm/yyyy
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%d/%m/%Y')
 
-    return pd.DataFrame(data)
+    return df
 
 def mark_csv_as_generated_in_odoo(models, invoices_to_keep, db, uid, api_key):
     for invoice in invoices_to_keep:
-        # Update x_studio_boolean_field_24i_1ii6rf2v6 to True for processed invoices
+        # Update x_studio_csv_gnr to True for processed invoices
         models.execute_kw(
-            db, uid, api_key, 'account.move', 'write', [[invoice['id']], {'x_studio_boolean_field_24i_1ii6rf2v6': True}]
+            db, uid, api_key, 'account.move', 'write', [[invoice['id']], {'x_studio_csv_gnr': True}]
         )
 
 
