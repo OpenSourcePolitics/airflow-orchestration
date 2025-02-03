@@ -68,7 +68,7 @@ spec:
     images:
       airflow:
         repository: rg.fr-par.scw.cloud/airflow-orchestration/airflow
-        tag: refs-tags-airflow-v1.1.2
+        tag: refs-tags-airflow-v1.1.3
     ingress:
       web:
         annotations:
