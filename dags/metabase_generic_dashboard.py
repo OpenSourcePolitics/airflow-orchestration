@@ -1,13 +1,20 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.models import Variable
+from airflow.decorators import task, dag
+from client_list import clients
 from data_utils.metabase_automation.metabase_automation import (
     dashboard_copy,
     get_new_dashboard_id,
     replace_dashboard_source_db,
-    MTB,
-    get_all_db_ids, pin_dashboard_in_collection
+    get_collection_id_by_name,
+    create_sub_collection_if_not_exist,
+    clean_sub_collection,
+    get_sub_collection_id_by_name,
+    get_dashboard_names
 )
+from data_utils.metabase_automation.metabase_generic_dashboard_data import metabase_generic_dashboard_data
+from data_utils.alerting.alerting import task_failed
 import logging
+import re
 
 default_args = {
     'owner': 'airflow',
@@ -15,123 +22,109 @@ default_args = {
     'retries': 1,
 }
 
+metabase_reference_global_dashboard_id = Variable.get("metabase_reference_global_dashboard_id")
+metabase_reference_local_dashboard_id = Variable.get("metabase_reference_local_dashboard_id")
 
-def get_collection_id_by_name(collection_name):
-    """
-    Retrieve the ID of a collection by its name.
-    """
-    collections = MTB.get('/api/collection/')
-    for collection in collections:
-        if collection['name'] == collection_name:
-            logging.info(f'Found collection: {collection["name"]} and ID: {collection["id"]}')
-            return collection['id']
-    raise RuntimeError(f"Collection with name '{collection_name}' not found.")
-
-
-def get_sub_collection_id_by_name(parent_collection_id, sub_collection_name):
-    """
-    Retrieve the ID of a sub-collection by its name, given the parent collection ID.
-    """
-    # Retrieve the collection tree
-    collection_tree = MTB.get('/api/collection/tree')
-
-    # Find the parent collection
-    for collection in collection_tree:
-        if collection['id'] == parent_collection_id:
-            # Look for the subcollection inside the parent collection
-            for sub_collection in collection.get('children', []):
-                if sub_collection['name'] == sub_collection_name:
-                    return sub_collection['id']
-            raise RuntimeError(
-                f"Sub-collection with name '{sub_collection_name}' not found under parent collection ID {parent_collection_id}.")
-
-    raise RuntimeError(f"Parent collection with ID {parent_collection_id} not found.")
-
-
-def get_database_id_from_dashboard(dashboard_name, collection_name):
-    """
-    Retrieve the database ID from a dashboard named 'Tableau de bord général' in a specific collection.
-    """
-    collection_id = get_collection_id_by_name(collection_name)
-    dashboard_id = get_new_dashboard_id(collection_id, dashboard_name)
-    dashboard = MTB.get(f'/api/dashboard/{dashboard_id}')
-    db_ids = get_all_db_ids(dashboard)
-    if len(db_ids) == 1:
-        return db_ids[0]
-    raise RuntimeError(f"Expected one database ID, but found {len(db_ids)} for dashboard {dashboard_name}.")
-
-
-def copy_dashboard_task(**kwargs):
-    """
-    Copy a dashboard and return the new dashboard ID.
-    """
-    dashboard_id = kwargs['dashboard_id']
-    collection_name = kwargs['collection_name']
-    dashboard_name = kwargs['dashboard_name']
-    sub_collection_name = kwargs['sub_collection_name']
-
-    # Get the collection ID by name
-    collection_id = get_collection_id_by_name(collection_name)
-
-    # Get the collection ID by name
-    sub_collection_id = get_sub_collection_id_by_name(collection_id, sub_collection_name)
-    logging.info(f'sub_collection_id is {sub_collection_id}')
-
-    # Copy the dashboard
-    dashboard_copy(dashboard_id, sub_collection_id, dashboard_name)
-
-    # Get the new dashboard ID
-    new_dashboard_id = get_new_dashboard_id(sub_collection_id, dashboard_name)
-
-    pin_dashboard_in_collection(new_dashboard_id)
-
-    return new_dashboard_id
-
-
-def update_dashboard_database_task(**kwargs):
-    """
-    Update the database source of the copied dashboard.
-    """
-    schema_name = kwargs['schema_name']
-    database_id = kwargs['database_id']
-
-    # Get the new dashboard ID
-    new_dashboard_id = kwargs['ti'].xcom_pull(task_ids='copy_dashboard')
-    print(f'New dashboard ID: {new_dashboard_id}')
-
-    # Update the dashboard
-    replace_dashboard_source_db(new_dashboard_id, database_id, schema_name)
-
-
-with DAG(
-        'metabase_dashboard_copy_and_update',
+def create_metabase_generic_dashboard_dag(client_name):
+    @dag(
+        dag_id=f"metabase_generic_dashboard_orchestration_{client_name}",  # Ensure unique dag_id
         default_args=default_args,
-        description='Copy a Metabase dashboard and update its database source',
-        schedule_interval=None,
+        schedule=None,
         catchup=False,
-) as dag:
-    # Task 1: Copy the dashboard and get the new dashboard ID
-    copy_dashboard_op = PythonOperator(
-        task_id='copy_dashboard',
-        python_callable=copy_dashboard_task,
-        op_kwargs={
-            'dashboard_id': 558,  # ID of the dashboard to copy
-            'collection_name': "Marseille",  # Name of the target collection
-            'sub_collection_name': "Test - TDB",  # Name of the target sub-collection
-            'dashboard_name': "Tableau de bord global 🌍",  # Name of the new dashboard
-        }
+        on_failure_callback=task_failed
     )
+    def create_and_update_generic_dashboard():
 
-    # Task 2: Update the database of the new dashboard
-    update_dashboard_database_op = PythonOperator(
-        task_id='update_dashboard_database',
-        python_callable=update_dashboard_database_task,
-        op_kwargs={
-            'schema_name': 'prod',  # Schema to use for the new database
-            'database_id': 165,  # Schema to use for the new database
-        },
-        provide_context=True  # Enable XCom access
-    )
+        client_metadata = metabase_generic_dashboard_data[client_name]
+        clients_collection_name = client_metadata["collection_name"]
+        client_database_id = client_metadata["database_id"]
+        client_language = client_metadata["language"]
 
-    # Define task dependencies
-    copy_dashboard_op >> update_dashboard_database_op
+        sub_collection_name, name_global_dashboard, name_local_dashboard = get_dashboard_names(client_language)
+
+        def sanitize_task_name(name):
+            """
+            Convert a string into a valid Airflow task_id by:
+            - Converting to lowercase
+            - Replacing spaces with underscores
+            - Removing all non-alphanumeric characters except underscores
+            """
+            sanitized_name = re.sub(r'[^a-zA-Z0-9_]', '', name.replace(" ", "_").lower())
+            return sanitized_name
+
+        @task(task_id='prepare_sub_collection')
+        def prepare_sub_collection(collection_name, sub_collection_name):
+            """
+            Ensure that the sub-collection exists inside the parent collection. If not, create it.
+            Then retrieve the sub-collection ID and clean it before copying dashboards.
+            """
+            # Get the parent collection ID
+            collection_id = get_collection_id_by_name(collection_name)
+
+            # Ensure the sub-collection exists
+            create_sub_collection_if_not_exist(collection_id, sub_collection_name)
+
+            # Ensure the sub-collection is empty before use
+            sub_collection_id = get_sub_collection_id_by_name(collection_id, sub_collection_name)
+            logging.info(f"Cleaning sub-collection ID: {sub_collection_id}")
+            clean_sub_collection(sub_collection_id)
+
+            return sub_collection_id
+
+        def create_copy_dashboard_task(dashboard_id, dashboard_name):
+            task_safe_name = sanitize_task_name(dashboard_name)  # Ensure the task name is valid
+
+            @task(task_id=f'copy_{task_safe_name}', provide_context=True)
+            def copy_dashboard(**kwargs):
+                """
+                Copies a dashboard into the prepared sub-collection and returns its new ID.
+                """
+                # Retrieve the sub-collection ID from XCom
+                sub_collection_id = kwargs['ti'].xcom_pull(task_ids='prepare_sub_collection')
+                dashboard_copy(dashboard_id, sub_collection_id, dashboard_name)
+                return get_new_dashboard_id(sub_collection_id, dashboard_name)
+
+            return copy_dashboard
+
+        def create_update_dashboard_task(dashboard_name, database_id):
+            task_safe_name = sanitize_task_name(dashboard_name)
+
+            @task(task_id=f'update_{task_safe_name}', provide_context=True)
+            def update_dashboard(**kwargs):
+                """
+                Update the database source of the copied dashboard.
+                """
+                # Extract task ID string
+                copy_dashboard_task_id = f'copy_{task_safe_name}'
+
+                # Retrieve the new dashboard ID from XCom
+                new_dashboard_id = kwargs['ti'].xcom_pull(task_ids=copy_dashboard_task_id)
+                replace_dashboard_source_db(new_dashboard_id, database_id, 'prod')
+
+            return update_dashboard
+
+        sub_collection_id = prepare_sub_collection(
+            collection_name=clients_collection_name,
+            sub_collection_name=sub_collection_name
+        )
+
+        copy_global_dashboard = create_copy_dashboard_task(metabase_reference_global_dashboard_id,
+                                                           name_global_dashboard)()
+        update_global_dashboard_database = create_update_dashboard_task(name_global_dashboard, client_database_id)()
+
+        copy_local_dashboard = create_copy_dashboard_task(metabase_reference_local_dashboard_id, name_local_dashboard)()
+        update_local_dashboard_database = create_update_dashboard_task(name_local_dashboard, client_database_id)()
+
+        sub_collection_id >> [copy_global_dashboard, copy_local_dashboard]
+        copy_global_dashboard >> update_global_dashboard_database
+        copy_local_dashboard >> update_local_dashboard_database
+
+    return create_and_update_generic_dashboard()
+
+
+enabled = Variable.get("metabase_generic_dashboard_enabled")
+
+if enabled == "True":
+    # Dynamically generate DAGs for all clients
+    for client in clients:
+        globals()[f"metabase_generic_dashboard_orchestration_{client}"] = create_metabase_generic_dashboard_dag(client_name=client)

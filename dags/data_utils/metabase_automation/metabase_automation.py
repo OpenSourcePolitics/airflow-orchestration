@@ -6,12 +6,21 @@ import re
 
 http_conn = BaseHook.get_connection("metabase_http")
 
-# Initialize MTB using the retrieved connection details
-MTB = Metabase_API(
-    http_conn.host,
-    http_conn.login,
-    http_conn.password
-)
+class MetabaseClient:
+    """
+    Singleton class to initialize and manage Metabase API calls.
+    """
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            http_conn = BaseHook.get_connection("metabase_http")
+            cls._instance = super(MetabaseClient, cls).__new__(cls)
+            cls._instance.api = Metabase_API(http_conn.host, http_conn.login, http_conn.password)
+        return cls._instance.api
+
+# Initialize Metabase client
+MTB = MetabaseClient()
 
 def modify_dict(original_dict, keys_list, value):
     working_dict = original_dict
@@ -202,27 +211,79 @@ def replace_dashboard_source_db(dashboard_id, new_db_id, schema_name):
         update_dashboard(dashboard_id, dashboard)
 
 
-def pin_dashboard_in_collection(dashboard_id, pinned=True):
+def get_collection_id_by_name(collection_name):
     """
-    Pin or unpin a dashboard in a collection.
-
-    Args:
-        dashboard_id (int): The ID of the dashboard.
-        pinned (bool): True to pin, False to unpin.
+    Retrieve the ID of a collection by its name.
     """
-    payload = {"pinned": pinned}
-    response = MTB.put(f'/api/dashboard/{dashboard_id}', json=payload)
+    collections = MTB.get('/api/collection/')
+    for collection in collections:
+        if collection['name'] == collection_name:
+            logging.info(f'Found collection: {collection["name"]} and ID: {collection["id"]}')
+            return collection['id']
+    raise RuntimeError(f"Collection with name '{collection_name}' not found.")
 
-    # Debugging: Log the response
-    logging.info(f"Response from pin_dashboard_in_collection: {response}")
 
-    # Handle response properly
-    if response and response == 200:
-        action = "pinned" if pinned else "unpinned"
-        print(f"Dashboard {dashboard_id} successfully {action}.")
-    else:
-        raise RuntimeError(f"Failed to update pin status for dashboard {dashboard_id}. "
-                           f"Error: {response}")
+def get_sub_collection_id_by_name(parent_collection_id, sub_collection_name):
+    """
+    Retrieve the ID of a sub-collection by its name, given the parent collection ID.
+    """
+    collection_tree = MTB.get('/api/collection/tree')
+    for collection in collection_tree:
+        if collection['id'] == parent_collection_id:
+            for sub_collection in collection.get('children', []):
+                if sub_collection['name'] == sub_collection_name:
+                    return sub_collection['id']
+            raise RuntimeError(
+                f"Sub-collection with name '{sub_collection_name}' not found under parent collection ID {parent_collection_id}.")
+    raise RuntimeError(f"Parent collection with ID {parent_collection_id} not found.")
+
+
+def create_sub_collection_if_not_exist(collection_id, sub_collection_name):
+    try:
+        # Check if the sub-collection already exists
+        sub_collection_id = get_sub_collection_id_by_name(collection_id, sub_collection_name)
+        logging.info(f"Sub-collection '{sub_collection_name}' already exists with ID: {sub_collection_id}")
+
+    except RuntimeError:
+        # If the sub-collection does not exist, create it
+        logging.info(f"Sub-collection '{sub_collection_name}' does not exist. Creating it now.")
+
+        payload = {
+            "name": sub_collection_name,
+            "parent_id": collection_id
+        }
+
+        response = MTB.post('/api/collection/', json=payload)
+        if not response or "id" not in response:
+            raise RuntimeError(
+                f"Failed to create sub-collection '{sub_collection_name}'.")
+
+        sub_collection_id = response["id"]
+        logging.info(f"Created new sub-collection '{sub_collection_name}' with ID: {sub_collection_id}")
+
+
+def clean_sub_collection(collection_id):
+    """
+    Move all items within a specified collection to the trash.
+    """
+    response = MTB.get(f'/api/collection/{collection_id}/items')
+    if not isinstance(response, dict) or 'data' not in response:
+        raise RuntimeError(f"Unexpected API response format: {response}")
+    items = response['data']
+    if not items:
+        logging.info(f"No items found in collection ID {collection_id}.")
+        return
+    for item in items:
+        item_id = item.get('id')
+        item_model = item.get('model')
+        if not item_id or not item_model:
+            logging.warning(f"Skipping invalid item: {item}")
+            continue
+        try:
+            logging.info(f"Archiving item ID: {item_id}, Type: {item_model}")
+            MTB.put(f'/api/{item_model}/{item_id}', json={'archived': True})
+        except Exception as e:
+            logging.error(f"Error archiving item ID {item_id}: {str(e)}")
 
 
 def dashboard_copy(dashboard_id, collection_id, dashboard_name):
@@ -245,4 +306,18 @@ def dashboard_copy(dashboard_id, collection_id, dashboard_name):
         logging.error(f"Input error: {str(ve)}")
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
+
+
+def get_dashboard_names(language):
+    """
+    Returns localized names for the sub-collection and dashboards based on the selected language.
+    """
+    translations = {
+        "fr": ("Tableaux de bord génériques", "Tableau de bord global 🌍", "Tableau de bord local 📍"),
+        "nl": ("Generieke dashboards", "Globaal dashboard 🌍", "Lokaal dashboard 📍"),
+        "en": ("Generic dashboards", "Global dashboard 🌍", "Local dashboard 📍"),
+        "de": ("Generische Dashboards", "Globales Dashboard 🌍", "Lokales Dashboard 📍"),
+    }
+
+    return translations.get(language, translations["fr"])  # Default to French if language not found
 
