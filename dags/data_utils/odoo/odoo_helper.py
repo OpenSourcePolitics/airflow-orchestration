@@ -4,7 +4,7 @@ from airflow.models import Variable
 import requests
 from airflow.hooks.base import BaseHook
 import pandas as pd
-
+import re
 
 def fetch_invoices(models, db, uid, api_key):
     """
@@ -52,6 +52,7 @@ def fetch_lines(models, invoice, db, uid, api_key):
     )
 
 
+
 def process_invoices(models, invoices_to_keep, db, uid, api_key):
     """
     Process invoices, fetch lines, update field and return the data for DataFrame.
@@ -64,14 +65,14 @@ def process_invoices(models, invoices_to_keep, db, uid, api_key):
             try:
                 # If no account_id, do nothing
                 if line['account_id']:
-                    account_information = line['account_id'][1]
+                    account_information = re.sub(r'(\s*\(copie\))+', '', line['account_id'][1])
                     code = account_information.split(" ", 1)[0]
                     if account_information.startswith('411'):
                         account_name = invoice['partner_id'][1]
                     else:
                         account_name = (
-                            line['account_id'][1].split(" ", 1)[1]
-                            if " " in line['account_id'][1] else line['account_id'][1]
+                            account_information.split(" ", 1)[1]
+                            if " " in account_information else account_information
                         )
 
                     # Determine type (Invoice or Refund)
@@ -104,6 +105,7 @@ def process_invoices(models, invoices_to_keep, db, uid, api_key):
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%d/%m/%Y')
 
     return df
+
 
 def mark_csv_as_generated_in_odoo(models, invoices_to_keep, db, uid, api_key):
     for invoice in invoices_to_keep:
