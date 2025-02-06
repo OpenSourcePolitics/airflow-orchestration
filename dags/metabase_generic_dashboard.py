@@ -22,8 +22,6 @@ default_args = {
     'retries': 1,
 }
 
-metabase_reference_global_dashboard_id = Variable.get("metabase_reference_global_dashboard_id")
-metabase_reference_local_dashboard_id = Variable.get("metabase_reference_local_dashboard_id")
 
 def create_metabase_generic_dashboard_dag(client_name):
     @dag(
@@ -41,6 +39,9 @@ def create_metabase_generic_dashboard_dag(client_name):
         client_language = client_metadata["language"]
 
         sub_collection_name, name_global_dashboard, name_local_dashboard = get_dashboard_names(client_language)
+        metabase_reference_global_dashboard_id = Variable.get(f"metabase_reference_global_dashboard_id_{client_language}")
+        metabase_reference_local_dashboard_id = Variable.get(f"metabase_reference_local_dashboard_id_{client_language}")
+
 
         def sanitize_task_name(name):
             """
