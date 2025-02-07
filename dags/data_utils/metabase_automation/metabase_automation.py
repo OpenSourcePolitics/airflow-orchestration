@@ -308,7 +308,7 @@ def dashboard_copy(dashboard_id, collection_id, dashboard_name):
         logging.error(f"Unexpected error: {str(e)}")
 
 
-def get_dashboard_names(language):
+def get_generic_dashboard_names(language):
     """
     Returns localized names for the sub-collection and dashboards based on the selected language.
     """
