@@ -1,7 +1,8 @@
+from odoo_helper import fetch_invoices, process_invoices, export_csv_and_send_webhook
 import unittest
-from unittest.mock import MagicMock, patch
-
-from odoo_helper import fetch_invoices, process_invoices
+from unittest.mock import patch, MagicMock
+import pandas as pd
+from datetime import datetime
 
 
 
@@ -98,6 +99,52 @@ class TestOdooInvoicesAutomation(unittest.TestCase):
         self.assertEqual(df.iloc[0]['Libelle Compte'], 'Client A')
         self.assertEqual(df.iloc[0]['Debit'], 100.0)
         self.assertEqual(df.iloc[0]['Credit'], 0.0)
+
+
+class TestExportCSVAndSendWebhook(unittest.TestCase):
+
+    @patch("odoo_helper.requests.post")
+    @patch("odoo_helper.Variable.get")
+    def test_export_csv_and_send_webhook(self, mock_variable_get, mock_requests_post):
+        """
+        Test that the export_csv_and_send_webhook function correctly generates
+        two separate CSV files when the data spans multiple months.
+        """
+
+        # Simulate a webhook URL
+        mock_variable_get.return_value = "https://webhook.example.com"
+
+        # Simulate a DataFrame with data from two different months
+        data = [
+            {'Journal': 'VTE', 'Date': '01/01/2023', 'N piece': 'INV001', 'Code': '411', 'Libelle Compte': 'Client A', 'Libelle': 'Invoice - Client A', 'Debit': 100.0, 'Credit': 0.0},
+            {'Journal': 'VTE', 'Date': '15/01/2023', 'N piece': 'INV002', 'Code': '411', 'Libelle Compte': 'Client B', 'Libelle': 'Invoice - Client B', 'Debit': 200.0, 'Credit': 0.0},
+            {'Journal': 'VTE', 'Date': '05/02/2023', 'N piece': 'INV003', 'Code': '411', 'Libelle Compte': 'Client C', 'Libelle': 'Invoice - Client C', 'Debit': 300.0, 'Credit': 0.0},
+        ]
+
+        df = pd.DataFrame(data)
+
+        # Call the function with the mock data
+        with patch("builtins.open", MagicMock()), patch("pandas.DataFrame.to_csv", MagicMock()):
+            export_csv_and_send_webhook(df)
+
+        # Verify that the function generates two CSV files with distinct names based on the month
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        expected_filenames = [
+            f"{current_date}_for_2023-01_output_invoices.csv",
+            f"{current_date}_for_2023-02_output_invoices.csv"
+        ]
+
+        # Check if requests.post was called twice (one for each month)
+        self.assertEqual(mock_requests_post.call_count, 2)
+
+        # Extract the filenames used in the mock call arguments
+        actual_filenames = [
+            call_args[1]['files']['file'][0] for call_args in mock_requests_post.call_args_list
+        ]
+
+        # Ensure that both expected filenames are in the actual filenames list
+        self.assertTrue(all(filename in actual_filenames for filename in expected_filenames))
+
 
 if __name__ == '__main__':
     unittest.main()
