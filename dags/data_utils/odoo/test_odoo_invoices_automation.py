@@ -90,10 +90,9 @@ class TestOdooInvoicesAutomation(unittest.TestCase):
 
         df = process_invoices(self.mock_models, invoices_to_keep, self.db, self.uid, self.api_key)
 
-        # Vérifier le contenu du DataFrame
         self.assertEqual(len(df), 1)
         self.assertEqual(df.iloc[0]['Journal'], 'VTE')
-        self.assertEqual(df.iloc[0]['Date'], '2023-01-01')
+        self.assertEqual(df.iloc[0]['Date'], '01/01/2023')
         self.assertEqual(df.iloc[0]['N piece'], 'INV001')
         self.assertEqual(df.iloc[0]['Code'], '411')
         self.assertEqual(df.iloc[0]['Libelle Compte'], 'Client A')
