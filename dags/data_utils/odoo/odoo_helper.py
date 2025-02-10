@@ -117,41 +117,34 @@ def mark_csv_as_generated_in_odoo(models, invoices_to_keep, db, uid, api_key):
 
 def export_csv_and_send_webhook(df):
     """
-    Export the DataFrame to a CSV file with a date-prefixed filename and send it via a webhook.
-
-    Parameters:
-        df (DataFrame): The pandas DataFrame to export.
+    Export DataFrame split by month and send each as a separate CSV file via webhook.
     """
     if df.empty:
-        print("The DataFrame is empty. No file will be generated or sent.")
+        print("The DataFrame is empty. No files will be generated or sent.")
         return
 
     # Generate the filename with the current date as prefix
     current_date = datetime.now().strftime('%Y-%m-%d')
-    filename = f"{current_date}_output_invoices.csv"
 
-    # Save the DataFrame to a CSV file
-    df.to_csv(filename, index=False)
-    print(f"CSV file '{filename}' has been successfully generated.")
-
-    # Prepare the file for the webhook
-    files = {
-        'file': (filename, open(filename, 'rb'), 'text/csv')
-    }
-
+    df['YearMonth'] = pd.to_datetime(df['Date'], dayfirst=True, errors='coerce').dt.strftime('%Y-%m')
+    grouped = df.groupby('YearMonth')
     webhook_url = Variable.get("odoo_automation_webhook_url")
 
-    try:
-        # Send the file via the webhook
-        response = requests.post(webhook_url, files=files)
+    for year_month, group in grouped:
+        filename = f"{current_date}_for_{year_month}_output_invoices.csv"
+        group.drop(columns=['YearMonth'], inplace=True)
+        group.to_csv(filename, index=False)
+        print(f"CSV file '{filename}' has been successfully generated.")
 
-        # Check the response
-        if response.status_code == 200:
-            print(f"The file '{filename}' has been successfully sent to the webhook.")
-        else:
-            print(f"Failed to send the file: {response.status_code} - {response.text}")
-    except Exception as e:
-        print(f"An error occurred while sending the file: {e}")
+        files = {'file': (filename, open(filename, 'rb'), 'text/csv')}
+        try:
+            response = requests.post(webhook_url, files=files)
+            if response.status_code == 200:
+                print(f"The file '{filename}' has been successfully sent to the webhook.")
+            else:
+                print(f"Failed to send the file: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"An error occurred while sending the file: {e}")
 
 
 def odoo_invoices_automation_helper():
