@@ -98,11 +98,18 @@ def process_invoices(models, invoices_to_keep, db, uid, api_key):
             except Exception as e:
                 raise Exception(f"Error processing account_id: {e}")
 
-    # Convert data into DataFrame
+    # Check if the DataFrame is empty
+    if not data:
+        print("No invoices to process. An empty DataFrame will be returned.")
+        columns = ['Journal', 'Date', 'N piece', 'Code', 'Libelle Compte', 'Libelle', 'Debit', 'Credit']
+        return pd.DataFrame(columns=columns)  # Return an empty DataFrame with the correct columns
+
+    # Convert data into a DataFrame
     df = pd.DataFrame(data)
 
-    # Convert 'Date' column from yyyy-mm-dd to dd/mm/yyyy
-    df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%d/%m/%Y')
+    # Check if the 'Date' column exists before converting
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%d/%m/%Y')
 
     return df
 
