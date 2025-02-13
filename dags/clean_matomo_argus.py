@@ -18,12 +18,17 @@ def clean_data_for_date(execution_date, **kwargs):
         ssl_disabled=True
     )
 
+    client_name = "meyzieu"
+    word_to_lookup = "beauvais"
+    id_site = 148
     cursor = conn.cursor()
+    log_visits_table = f"{client_name}_log_visit"
+    log_actions_table = f"{client_name}_log_actions"
 
     try:
         # Create table to store idvisit
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS bordeaux_log_visit (
+        cursor.execute(f"""
+            CREATE TABLE IF NOT EXISTS {log_visits_table} (
                 idvisit BIGINT NOT NULL,
                 clean_date DATE NOT NULL
             );
@@ -31,26 +36,26 @@ def clean_data_for_date(execution_date, **kwargs):
 
         # Insert idvisit for the given date
         cursor.execute(f"""
-            INSERT INTO bordeaux_log_visit (idvisit, clean_date)
+            INSERT INTO {log_visits_table} (idvisit, clean_date)
             SELECT idvisit, '{date_to_clean}'
             FROM matomo_log_visit
             WHERE DATE(visit_first_action_time) = '{date_to_clean}'
-              AND referer_url LIKE '%bordeaux%'
-              AND idsite = 23;
+              AND referer_url LIKE '%{word_to_lookup}%'
+              AND idsite = {id_site};
         """)
 
         conn.commit()
-        cursor.execute("SELECT COUNT(*) FROM bordeaux_log_visit WHERE clean_date = %s;", (date_to_clean,))
+        cursor.execute(f"SELECT COUNT(*) FROM {log_visits_table} WHERE clean_date = %s;", (date_to_clean,))
         count = cursor.fetchone()[0]
-        print(f"{count} rows inserted into bordeaux_log_visit for date {date_to_clean}.")
+        print(f"{count} rows inserted into {log_visits_table} for date {date_to_clean}.")
 
         if count == 0:
             print(f"No data to clean for {date_to_clean}.")
             return
 
         # Create table to store idaction
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS bordeaux_log_actions (
+        cursor.execute(f"""
+            CREATE TABLE IF NOT EXISTS  {log_actions_table}(
                 idvisit BIGINT NOT NULL,
                 idaction_value BIGINT NOT NULL,
                 idaction_type VARCHAR(50) NOT NULL,
@@ -67,54 +72,54 @@ def clean_data_for_date(execution_date, **kwargs):
             'idaction_product_cat5', 'idaction_product_name', 'idaction_product_sku'
         ]
 
-        # Loop through each column and insert data into bordeaux_log_actions
+        # Loop through each column and insert data into log_actions_table
         for column in action_columns:
             action_type = column
             cursor.execute(f"""
-                INSERT INTO bordeaux_log_actions (idvisit, idaction_value, idaction_type, clean_date)
+                INSERT INTO {log_actions_table} (idvisit, idaction_value, idaction_type, clean_date)
                 SELECT DISTINCT idvisit, {column}, '{action_type}', '{date_to_clean}'
                 FROM matomo_log_link_visit_action 
-                WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}')
+                WHERE idvisit IN (SELECT idvisit FROM {log_visits_table} WHERE clean_date = '{date_to_clean}')
                 AND {column} IS NOT NULL;
             """)
         conn.commit()
 
-        # Count inserted rows in bordeaux_log_actions
+        # Count inserted rows in log_actions_table
         cursor.execute(
-            "SELECT COUNT(*) FROM bordeaux_log_actions WHERE clean_date = %s;",
+            f"SELECT COUNT(*) FROM {log_actions_table} WHERE clean_date = %s;",
             (date_to_clean,))
         log_actions_count = cursor.fetchone()[0]
-        print(f"{log_actions_count} rows inserted into bordeaux_log_actions for date {date_to_clean}.")
+        print(f"{log_actions_count} rows inserted into {log_actions_table} for date {date_to_clean}.")
 
         # Clean matomo_log_link_visit_action
         cursor.execute(f"""
             DELETE FROM matomo_log_link_visit_action
-            WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
+            WHERE idvisit IN (SELECT idvisit FROM {log_visits_table} WHERE clean_date = '{date_to_clean}');
         """)
 
         # Clean matomo_log_conversion
         cursor.execute(f"""
             DELETE FROM matomo_log_conversion
-            WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
+            WHERE idvisit IN (SELECT idvisit FROM {log_visits_table} WHERE clean_date = '{date_to_clean}');
         """)
 
         # Clean matomo_log_visit
         cursor.execute(f"""
             DELETE FROM matomo_log_visit
-            WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
+            WHERE idvisit IN (SELECT idvisit FROM {log_visits_table} WHERE clean_date = '{date_to_clean}');
         """)
 
         # Clean matomo_log_conversion_item
         cursor.execute(f"""
             DELETE FROM matomo_log_conversion_item
-            WHERE idvisit IN (SELECT idvisit FROM bordeaux_log_visit WHERE clean_date = '{date_to_clean}');
+            WHERE idvisit IN (SELECT idvisit FROM {log_visits_table} WHERE clean_date = '{date_to_clean}');
         """)
 
 
         conn.commit()
 
         print(
-            f"Data cleaned successfully for {date_to_clean}. The IDs are stored in bordeaux_log_visit and bordeaux_log_actions.")
+            f"Data cleaned successfully for {date_to_clean}. The IDs are stored in {log_visits_table} and {log_actions_table}.")
 
     except Exception as e:
         print(f"Error cleaning data for {date_to_clean}: {e}")
@@ -127,7 +132,7 @@ def clean_data_for_date(execution_date, **kwargs):
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2024, 9, 15),
+    'start_date': datetime(2024, 6, 15),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
