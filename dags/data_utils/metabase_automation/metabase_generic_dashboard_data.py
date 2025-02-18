@@ -18,7 +18,7 @@ metabase_generic_dashboard_data = {
     "mel":{"collection_name": "MEL", "database_id": 214, "language": "fr"},
     "montpellier": {"collection_name": "Montpellier", "database_id": 163, "language": "fr"},
     "meyzieu": {"collection_name": "Meyzieu", "database_id": 166, "language": "fr"},
-    "nanterre": {"collection_name": "Natterre", "database_id": 211, "language": "fr"},
+    "nanterre": {"collection_name": "Nanterre", "database_id": 211, "language": "fr"},
     "nets4dem": {"collection_name": "Nets4Dem", "database_id": 212, "language": "en"},
     "real_deal": {"collection_name": "Real Deal", "database_id": 172, "language": "en"},
     "sytral": {"collection_name": "Sytral", "database_id": 33, "language": "fr"},
