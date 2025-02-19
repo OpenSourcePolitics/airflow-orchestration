@@ -6,21 +6,27 @@ import re
 
 http_conn = BaseHook.get_connection("metabase_http")
 
+
 class MetabaseClient:
     """
-    Singleton class to initialize and manage Metabase API calls.
+    Singleton class to initialize and manage Metabase API calls using an API token.
     """
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
             http_conn = BaseHook.get_connection("metabase_http")
+            token = http_conn.password
+            if not token:
+                raise ValueError("API token for Metabase is missing in the connection extras.")
+
             cls._instance = super(MetabaseClient, cls).__new__(cls)
-            cls._instance.api = Metabase_API(http_conn.host, http_conn.login, http_conn.password)
+            cls._instance.api = Metabase_API(http_conn.host, api_key=token)  # Use token instead of credentials
         return cls._instance.api
 
 # Initialize Metabase client
 MTB = MetabaseClient()
+
 
 def modify_dict(original_dict, keys_list, value):
     working_dict = original_dict
