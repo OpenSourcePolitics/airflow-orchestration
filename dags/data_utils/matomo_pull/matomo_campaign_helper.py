@@ -18,14 +18,15 @@ def process_dataframe_for_campaign(df):
 
     # Rename columns only if they exist in the DataFrame
     df = df.rename(columns={col: new_col for col, new_col in rename_map.items() if col in df.columns})
-
     # Check if the combined source-medium column exists
     if 'MarketingCampaignsReporting_CampaignSourceMedium' in df.columns:
         # Split the combined source-medium column into two separate columns
-        source_medium_split = df['MarketingCampaignsReporting_CampaignSourceMedium'].str.split(' - ', expand=True)
-        df['campaign_source'] = source_medium_split[0]  # Assign the first part as campaign_source
-        df['campaign_medium'] = source_medium_split[1]  # Assign the second part as campaign_medium
-        # Drop the original combined column as it's no longer needed
-        df = df.drop(columns=['MarketingCampaignsReporting_CampaignSourceMedium'])
-
+        try:
+            source_medium_split = df['MarketingCampaignsReporting_CampaignSourceMedium'].str.split(' - ', expand=True)
+            df['campaign_source'] = source_medium_split[0]  # Assign the first part as campaign_source
+            df['campaign_medium'] = source_medium_split[1]  # Assign the second part as campaign_medium
+            # Drop the original combined column as it's no longer needed
+            df = df.drop(columns=['MarketingCampaignsReporting_CampaignSourceMedium'])
+        except KeyError as e:
+            pass
     return df
