@@ -1,6 +1,8 @@
 import json
 import urllib3
 import pandas as pd
+
+from .matomo_campaign_helper import process_dataframe_for_campaign
 from .matomo_request_config import matomo_requests_config
 from .matomo_postgres_dump import get_postgres_connection, clean_data_in_postgres, dump_data_to_postgres
 from .matomo_url import get_matomo_base_url, construct_url
@@ -47,7 +49,8 @@ def fetch_data_for_day(base_url, report_name, config, day):
             return pd.DataFrame()
         # Add the date field to each row
         data['date'] = pd.to_datetime(day)
-        return data
+        data_processed = process_dataframe_for_campaign(data)
+        return data_processed
 
     except Exception as e:
         error_message = f"Error fetching data for {report_name} on {day}: {str(e)}"
