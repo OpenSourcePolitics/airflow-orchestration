@@ -20,6 +20,7 @@ clients = [
     "meyzieu",
     "nanterre",
     "nets4dem",
+    "plaine_commune",
     "real_deal",
     "sytral",
     "thionville",
