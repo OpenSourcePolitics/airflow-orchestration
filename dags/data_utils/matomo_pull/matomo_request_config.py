@@ -1,5 +1,6 @@
 matomo_requests_config = {
     'hourly_visits': {'method': 'VisitTime.getVisitInformationPerLocalTime', 'flat': 1},
+    'daily_visits': {'method': 'VisitTime.getByDayOfWeek', 'flat': 1},
     'visits': {'method': 'API.get', 'format_metrics': 1, 'transpose': True},
     'pages': {'method': 'Actions.getPageUrls', 'flat': 1},
     'page_titles': {'method': 'Actions.getPageTitles', 'flat': 1},
