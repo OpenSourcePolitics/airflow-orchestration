@@ -3,6 +3,8 @@ from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.providers.airbyte.operators.airbyte import AirbyteTriggerSyncOperator
 from airflow.providers.airbyte.sensors.airbyte import AirbyteJobSensor
+
+from data_utils.postgres_helper.airbyte_cleanup import airbyte_cleanup
 from data_utils.github_helper import get_github_token, trigger_workflow
 from data_utils.airbyte_connection_id_retriever import get_airbyte_connection_id
 from data_utils.alerting.alerting import task_failed
@@ -71,6 +73,14 @@ def create_main_orchestration_dag(client_name):
             trigger_workflow(f'{client_name}_models_run_{env}.yml', token=github_token)
 
 
+        @task(task_id=f'cleanup_airbyte_metadata_{client_name}')
+        def cleanup_airbyte_metadata():
+            """
+            Cleanup Airbyte metadata by dropping unnecessary tables.
+            """
+            airbyte_cleanup(client_name)
+
+
         decidim_connection_id = get_connection_id_task("Decidim")()
         decidim_sync = trigger_airbyte_sync_task("Decidim", decidim_connection_id)
         wait_for_decidim_sync = wait_for_sync_completion_task("Decidim", decidim_sync.output)
@@ -80,11 +90,14 @@ def create_main_orchestration_dag(client_name):
         matomo_sync = trigger_airbyte_sync_task("Matomo", matomo_connection_id)
         wait_for_matomo_sync = wait_for_sync_completion_task("Matomo", matomo_sync.output)
 
+        cleanup_task = cleanup_airbyte_metadata()
+
         # Trigger GitHub action
         github_action = trigger_github_action()
 
         # Define dependencies
-        [wait_for_decidim_sync, wait_for_matomo_sync] >> github_action
+        for task_action in [github_action, cleanup_task]:
+            [wait_for_decidim_sync, wait_for_matomo_sync] >> task_action
 
     return main_orchestration()
 
