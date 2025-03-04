@@ -20,6 +20,7 @@ metabase_generic_dashboard_data = {
     "meyzieu": {"collection_name": "Meyzieu", "database_id": 166, "language": "fr"},
     "nanterre": {"collection_name": "Nanterre", "database_id": 211, "language": "fr"},
     "nets4dem": {"collection_name": "Nets4Dem", "database_id": 212, "language": "en"},
+    "plaine_commune": {"collection_name": "Plaine Commune", "database_id": 216, "language": "fr"},
     "real_deal": {"collection_name": "Real Deal", "database_id": 172, "language": "en"},
     "sytral": {"collection_name": "Sytral", "database_id": 33, "language": "fr"},
     "thionville": {"collection_name": "Thionville", "database_id": 122, "language": "fr"},
