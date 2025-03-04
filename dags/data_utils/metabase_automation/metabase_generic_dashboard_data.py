@@ -16,7 +16,7 @@ metabase_generic_dashboard_data = {
     "malakoff": {"collection_name": "Malakoff", "database_id": 207, "language": "fr"},
     "marseille": {"collection_name": "Marseille", "database_id": 165, "language": "fr"},
     "mel":{"collection_name": "MEL", "database_id": 214, "language": "fr"},
-    "montpellier": {"collection_name": "Montpellier", "database_id": 163, "language": "fr"},
+    "montpellier": {"collection_name": "Métropole de Montpellier", "database_id": 163, "language": "fr"},
     "meyzieu": {"collection_name": "Meyzieu", "database_id": 166, "language": "fr"},
     "nanterre": {"collection_name": "Nanterre", "database_id": 211, "language": "fr"},
     "nets4dem": {"collection_name": "Nets4Dem", "database_id": 212, "language": "en"},
