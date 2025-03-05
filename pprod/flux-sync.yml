@@ -79,7 +79,7 @@ spec:
         tls:
           enabled: true
           secretName: pprod-airflow-tls
-    web:
+    webserver:
       resources:
         limits:
           cpu: 1000m
