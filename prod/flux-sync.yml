@@ -80,6 +80,13 @@ spec:
         tls:
           enabled: true
           secretName: airflow-tls
+    webserver:
+      resources:
+        limits:
+          memory: 1.5Gi
+        requests:
+          cpu: 1000m
+          memory: 1.5Gi
     workers:
       persistence:
         size: 10Gi
