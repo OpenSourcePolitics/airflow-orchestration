@@ -21,6 +21,7 @@ clients = [
     "nanterre",
     "nets4dem",
     "plaine_commune",
+    "ps_belge",
     "real_deal",
     "sytral",
     "thionville",
