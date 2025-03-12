@@ -29,8 +29,11 @@ def fetch_and_dump_data(connection_name):
     for field in fields:
         df[field] = df['Prestations_2024'].apply(lambda x: field in x)
 
-    connection = get_postgres_connection(connection_name, "aggregated_client_data")
+    engine = get_postgres_connection(connection_name, "aggregated_client_data")
+    connection = engine.connect()
     table_name = "grist_test_ca"
 
     drop_table_in_postgres(connection, table_name)
     dump_data_to_postgres(connection, df, table_name)
+
+    connection.close()

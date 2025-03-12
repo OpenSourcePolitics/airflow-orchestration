@@ -15,10 +15,8 @@ def get_postgres_connection(connection_name, database):
         port = connection.port
 
         # Create the SQLAlchemy engine
-        engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{database}")
-        conn = engine.connect()
-        print("Successfully connected to the PostgreSQL database using Airflow connection.")
-        return conn
+        return create_engine(f"postgresql://{user}:{password}@{host}:{port}/{database}")
+
 
     except Exception as e:
         print(f"Failed to connect to PostgreSQL using Airflow connection: {e}")

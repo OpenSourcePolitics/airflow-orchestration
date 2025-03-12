@@ -1,13 +1,15 @@
 from .postgres_helper import get_postgres_connection
 from sqlalchemy import text
 import time
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-def drop_airbyte_metadata(connection):
+def drop_airbyte_metadata(engine):
     """
     Drop all tables from airbyte_internal schema and all tables in public/matomo schema
     that start with _airbyte.
     """
     # Drop all tables from airbyte_internal schema
+    connection = engine.connect()
     try:
         drop_airbyte_internal_query = text("""
             DO $$ 
@@ -65,19 +67,24 @@ def drop_airbyte_metadata(connection):
     except Exception as e:
         print(f"Failed to drop _airbyte tables from public/matomo schema: {e}")
 
-    # Force airflow to wait 1 minute in order to let the database drop all the tables
-    time.sleep(60)
+    time.sleep(30)
 
     try:
-        vacuum_query = text("VACUUM FULL;")
-        connection.execution_options(autocommit=True).execute(vacuum_query)
-        # Force airflow to wait 5 minutes in order to let the database vacuum full
-        time.sleep(300)
-        print("VACUUM FULL executed successfully.")
-
+        conn = engine.raw_connection()  # Get raw DBAPI connection
+        conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        conn.autocommit = True
+        cursor = conn.cursor()
+        print("Starting the VACUUM FULL")
+        start_time = time.time()
+        cursor.execute("VACUUM FULL")
+        elapsed_time = time.time() - start_time
+        print(f"VACUUM FULL lasted {elapsed_time:.2f} seconds")
+        cursor.close()
 
     except Exception as e:
         print(f"Failed to execute VACUUM FULL: {e}")
+
+    connection.close()
 
 database_name = {
     "angers": "angers",
@@ -102,6 +109,7 @@ database_name = {
     "nanterre": "nanterre",
     "nets4dem": "nets4dem",
     "plaine_commune": "plaine_commune",
+    "ps_belge": "ps_belge",
     "real_deal": "real_deal",
     "sytral": "sytral",
     "thionville": "thionville",
@@ -112,6 +120,5 @@ database_name = {
 }
 
 def airbyte_cleanup(database):
-    connection = get_postgres_connection("main_db_cluster_name", database_name[database])
-    drop_airbyte_metadata(connection)
-    connection.close()
+    engine = get_postgres_connection("main_db_cluster_name", database_name[database])
+    drop_airbyte_metadata(engine)
