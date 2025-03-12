@@ -1,6 +1,6 @@
 from .postgres_helper import get_postgres_connection
 from sqlalchemy import text
-
+import time
 
 def drop_airbyte_metadata(connection):
     """
@@ -64,6 +64,20 @@ def drop_airbyte_metadata(connection):
 
     except Exception as e:
         print(f"Failed to drop _airbyte tables from public/matomo schema: {e}")
+
+    # Force airflow to wait 1 minute in order to let the database drop all the tables
+    time.sleep(60)
+
+    try:
+        vacuum_query = text("VACUUM FULL;")
+        connection.execution_options(autocommit=True).execute(vacuum_query)
+        # Force airflow to wait 5 minutes in order to let the database vacuum full
+        time.sleep(300)
+        print("VACUUM FULL executed successfully.")
+
+
+    except Exception as e:
+        print(f"Failed to execute VACUUM FULL: {e}")
 
 database_name = {
     "angers": "angers",
