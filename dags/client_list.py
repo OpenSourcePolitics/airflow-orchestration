@@ -9,7 +9,7 @@ clients = [
     "cachan",
     "colombes",
     "cultuur_connect",
-    "decidim_0_29_multilang"
+    "decidim_0_29_multilang",
     "grand_nancy",
     "meyzieu",
     "lyon",
