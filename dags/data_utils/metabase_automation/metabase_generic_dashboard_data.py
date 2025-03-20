@@ -10,7 +10,7 @@ metabase_generic_dashboard_data = {
     "chambery": {"collection_name": "Chambéry", "database_id": 208, "language": "fr"},
     "colombes": {"collection_name": "Colombes", "database_id": 30, "language": "fr"},
     "cultuur_connect": {"collection_name": "Cultuurconnect", "database_id": 210, "language": "nl"},
-    "decidim_0_29_multilang": {"collection_name": "Démo", "database_id": 211, "language": "fr"},
+    "decidim_0_29_multilang": {"collection_name": "Démo", "database_id": 218, "language": "fr"},
     "grand_nancy": {"collection_name": "Grand Nancy", "database_id": 170, "language": "fr"},
     "lyon": {"collection_name": "Lyon", "database_id": 73, "language": "fr"},
     "loire_atlantique": {"collection_name": "Loire-Atlantique", "database_id": 47, "language": "fr"},
