@@ -95,6 +95,7 @@ database_name = {
     "cdc": "cdc",
     "cea": "cea",
     "cese": "cese",
+    "decidim_0_29_multilang": "decidim_0_29_multilang",
     "chambery": "chambery",
     "colombes": "colombes",
     "cultuur_connect": "cultuur_connect",
