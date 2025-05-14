@@ -14,17 +14,23 @@ import pendulum
 github_token = get_github_token()
 airbyte_conn_id = 'airbyte_api'
 env = Variable.get("environment")
-default_args = {"owner": "airflow", "start_date": pendulum.datetime(2024, 11, 11, tz="UTC")}
-
+default_args = {
+    "owner": "airflow",
+    "start_date": pendulum.datetime(2024, 11, 11, tz="UTC")
+}
 
 def create_main_orchestration_dag(client_name):
-    @dag(
-        dag_id=f"main_orchestration_{client_name}",  # Ensure unique dag_id
-        default_args=default_args,
-        schedule=None,
-        catchup=False,
-        on_failure_callback=task_failed
-    )
+    dag_args = {
+        "dag_id": f"main_orchestration_{client_name}",
+        "default_args": default_args,
+        "schedule": None,
+        "catchup": False,
+    }
+
+    if env != "preproduction":
+        dag_args["on_failure_callback"] = task_failed
+
+    @dag(**dag_args)
     def main_orchestration():
         def get_connection_id_task(sync_type):
             @task(task_id=f'get_connection_id_{sync_type.lower()}_{client_name}')
