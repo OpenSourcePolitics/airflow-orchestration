@@ -1,4 +1,5 @@
 from .postgres_helper import get_postgres_connection
+from .client_db_list import database_name
 from sqlalchemy import text
 import time
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -85,40 +86,6 @@ def drop_airbyte_metadata(engine):
         print(f"Failed to execute VACUUM FULL: {e}")
 
     connection.close()
-
-database_name = {
-    "angers": "angers",
-    "arcueil": "arcueil",
-    "bagneux": "bagneux",
-    "casa": "casa",
-    "cachan": "cachan",
-    "cdc": "cdc",
-    "cea": "cea",
-    "cese": "cese",
-    "decidim_0_29_multilang": "decidim_0_29_multilang",
-    "chambery": "chambery",
-    "colombes": "colombes",
-    "cultuur_connect": "cultuur_connect",
-    "grand_nancy": "grand_nancy",
-    "lyon": "lyon",
-    "loire_atlantique": "loire-atlantique",
-    "malakoff": "malakoff",
-    "marseille": "marseille",
-    "mel": "mel",
-    "montpellier": "montpellier",
-    "meyzieu": "meyzieu",
-    "nanterre": "nanterre",
-    "nets4dem": "nets4dem",
-    "plaine_commune": "plaine_commune",
-    "ps_belge": "ps_belge",
-    "real_deal": "real_deal",
-    "sytral": "sytral",
-    "thionville": "thionville",
-    "toulouse": "toulouse",
-    "tours": "tours",
-    "valbonne": "valbonne",
-    "villeurbanne": "villeurbanne"
-}
 
 def airbyte_cleanup(database):
     engine = get_postgres_connection("main_db_cluster_name", database_name[database])
