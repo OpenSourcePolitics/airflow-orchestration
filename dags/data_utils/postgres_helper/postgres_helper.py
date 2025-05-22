@@ -49,10 +49,11 @@ def clean_data_in_postgres(connection, table_name, start_date, end_date):
 
 
 # Dump DataFrame to PostgreSQL table
-def dump_data_to_postgres(connection, data, table_name):
+def dump_data_to_postgres(connection, data, table_name, schema='public', if_exists='append'):
     """Dumps the DataFrame into the specified PostgreSQL table."""
     try:
-        data.to_sql(table_name, connection, if_exists='append', index=False)
+        data.to_sql(table_name, connection, schema=schema, if_exists=if_exists, index=False)
         print(f"Data for {table_name} dumped successfully into the table.")
     except Exception as e:
         print(f"Failed to dump data into {table_name}: {e}")
+        raise

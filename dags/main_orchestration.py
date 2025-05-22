@@ -1,6 +1,7 @@
 from client_list import clients
 from airflow.decorators import dag, task
 from airflow.models import Variable
+from airflow.operators.python import PythonOperator
 from airflow.providers.airbyte.operators.airbyte import AirbyteTriggerSyncOperator
 from airflow.providers.airbyte.sensors.airbyte import AirbyteJobSensor
 
@@ -8,6 +9,8 @@ from data_utils.postgres_helper.airbyte_cleanup import airbyte_cleanup
 from data_utils.github_helper import get_github_token, trigger_workflow
 from data_utils.airbyte_connection_id_retriever import get_airbyte_connection_id
 from data_utils.alerting.alerting import task_failed
+from data_utils.questionnaires.questionnaire_pivot import create_questionnaire_filters
+
 import pendulum
 
 # Common variables
@@ -86,6 +89,16 @@ def create_main_orchestration_dag(client_name):
             """
             airbyte_cleanup(client_name)
 
+        def trigger_questionnaire_pivot():
+            """
+            Create filters table for selected questionnaires.
+            """
+            return PythonOperator(
+                task_id='create_questionnaire_filters',
+                python_callable=create_questionnaire_filters,
+                op_args=[client_name],
+                on_failure_callback=task_failed,
+                )
 
         decidim_connection_id = get_connection_id_task("Decidim")()
         decidim_sync = trigger_airbyte_sync_task("Decidim", decidim_connection_id)
@@ -101,9 +114,14 @@ def create_main_orchestration_dag(client_name):
         # Trigger GitHub action
         github_action = trigger_github_action()
 
+        # Trigger questionnaire pivot
+        questionnaire_pivot = trigger_questionnaire_pivot()
+
         # Define dependencies
         for task_action in [github_action, cleanup_task]:
             [wait_for_decidim_sync, wait_for_matomo_sync] >> task_action
+
+        github_action >> questionnaire_pivot
 
     return main_orchestration()
 
