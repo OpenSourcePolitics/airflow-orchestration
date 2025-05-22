@@ -1,4 +1,4 @@
-from questionnaire_pivot import pivot_filters, concat_multiple_answers
+from dags.data_utils.questionnaires.questionnaire_pivot import pivot_filters, concat_multiple_answers
 import unittest
 import pandas as pd
 
