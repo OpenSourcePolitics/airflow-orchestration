@@ -26,7 +26,7 @@ class TestDataframeProcessing(unittest.TestCase):
         """Test that the form_answers dataframe is correctly pivoted and aggregated."""
         form_filters = pivot_filters(self.df)
 
-        expected_columns = ['session_token','1._qu_avez-vous_contre_les_caractères_spéciaux_?', '2._pourquoi_?', '3._pourquoi_?']
+        expected_columns = ['session_token','1._qu_avez-vous_contre_les_caractères_sp', '2._pourquoi_?', '3._pourquoi_?']
         self.assertEqual(list(form_filters.columns), expected_columns)
 
     def test_handle_multiple_answers_to_single_option_questions(self):
