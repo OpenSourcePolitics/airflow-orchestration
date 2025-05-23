@@ -1,11 +1,10 @@
 import pendulum
 from airflow import DAG
-from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from data_utils.alerting.alerting import task_failed
 from data_utils.grist.grist_pull import fetch_and_dump_data
 
-connection_name="db_cluster_name_data"
+connection_name="main_db_cluster_name"
 
 with DAG(
         dag_id='grist_test_ca',
