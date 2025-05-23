@@ -46,7 +46,7 @@ def pivot_filters(form_answers):
     "Pivots a form_answers dataframe in order to generate a table to use in Metabase as questionnaire filters"
     
     form_answers['filter_name'] = form_answers['position'].astype(str) + '. ' + form_answers['question_title']
-    form_answers['filter_name'] = form_answers['filter_name'].str[:20]
+    form_answers['filter_name'] = form_answers['filter_name'].str[:40]
     form_filters = form_answers.pivot(index='session_token', columns='filter_name', values='answer')
     form_filters.columns=form_filters.columns.str.lower().str.replace(' ','_').str.replace("'","_")
     form_filters=form_filters.reset_index()
