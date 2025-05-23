@@ -2,10 +2,10 @@ import pandas as pd
 from ..postgres_helper.client_db_list import database_name
 from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgres_connection
 
+# do NOT add ps_belge 1 and 92 
 questionnaires_ids_dict = {
     "marseille": [456,559,560],
     "lyon": [611,653],
-    "ps_belge": [1,92]
 }
 
 def retrieve_form_answers(questionnaire_id, engine):
