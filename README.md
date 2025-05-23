@@ -35,6 +35,9 @@ git push origin airflow-vX.X.X
 git tag -a dags-vX.X.X -m "Publishing version X.X.X of the Dags"
 git push origin dags-vX.X.X
 ```
+   - Then, in `prod/flux-sync.yml`, edit the `spec.values.dags.gitSync.rev` value to use the proper version of the dags or airflow image
+```
+        rev: "refs/tags/dags-vX.X.X"
 
-Then you have to edit the flux-sync.yml to use the proper version of the dags or airflow image
-Use a commit message like : [Prod] - Release dags-vX.X.X
+```
+   - Use a commit message like : [Prod] - Release dags-vX.X.X
