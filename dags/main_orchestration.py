@@ -4,25 +4,24 @@ from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.providers.airbyte.operators.airbyte import AirbyteTriggerSyncOperator
 from airflow.providers.airbyte.sensors.airbyte import AirbyteJobSensor
-
 from data_utils.postgres_helper.airbyte_cleanup import airbyte_cleanup
 from data_utils.github_helper import get_github_token, trigger_workflow
 from data_utils.airbyte_connection_id_retriever import get_airbyte_connection_id
 from data_utils.alerting.alerting import task_failed
 from data_utils.questionnaires.questionnaire_pivot import create_questionnaire_filters
-
 import pendulum
 
-# Common variables
-github_token = get_github_token()
-airbyte_conn_id = 'airbyte_api'
-env = Variable.get("environment")
-default_args = {
-    "owner": "airflow",
-    "start_date": pendulum.datetime(2024, 11, 11, tz="UTC")
-}
 
 def create_main_orchestration_dag(client_name):
+    # Common variables
+    github_token = get_github_token()
+    airbyte_conn_id = 'airbyte_api'
+    env = Variable.get("environment")
+    default_args = {
+        "owner": "airflow",
+        "start_date": pendulum.datetime(2024, 11, 11, tz="UTC")
+    }
+
     dag_args = {
         "dag_id": f"main_orchestration_{client_name}",
         "default_args": default_args,
