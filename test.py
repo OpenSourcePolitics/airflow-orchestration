@@ -1,5 +1,5 @@
-from crossclient_pull import create_aggregated_tables
-from ...client_list import clients
+from dags.data_utils.crossclient_aggregation.crossclient_pull import create_aggregated_tables
+from dags.client_list import clients
 
 queries = {
     "all_users": "SELECT id AS decidim_user_id, email, created_at, confirmed, sign_in_count, deleted_at, blocked, spam, date_of_birth, gender FROM prod.users",

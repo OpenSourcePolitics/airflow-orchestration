@@ -2,7 +2,6 @@ import pendulum
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from data_utils.alerting.alerting import task_failed
-from data_utils.postgres_helper.client_db_list import database_name
 from client_list import clients
 from data_utils.crossclient_aggregation.crossclient_pull import create_aggregated_tables
 
@@ -22,7 +21,7 @@ with DAG(
     aggregate_crossclient_data = PythonOperator(
         task_id='create_aggregated_tables',
         python_callable=create_aggregated_tables,
-        op_args=[clients, queries],
+        op_args=[queries, clients],
         dag=dag,
         on_failure_callback=task_failed,
     )
