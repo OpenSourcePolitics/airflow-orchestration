@@ -6,6 +6,11 @@ from data_utils.crossclient_aggregation.crossclient_pull import create_aggregate
 
 connection_name="main_db_cluster_name"
 
+queries = {
+    "all_users": "SELECT id AS decidim_user_id, email, created_at, confirmed, sign_in_count, deleted_at, blocked, date_of_birth, gender FROM prod.all_users",
+    "budgets": "SELECT id AS decidim_budget_id, title, amount, is_selected, categories, ps_title FROM prod.budgets",
+}
+
 with DAG(
         dag_id='crossclient_aggregation',
         default_args={'owner': 'airflow'},
