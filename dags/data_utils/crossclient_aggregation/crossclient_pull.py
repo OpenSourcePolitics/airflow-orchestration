@@ -1,5 +1,5 @@
 import pandas as pd
-from dags.data_utils.postgres_helper.client_db_list import database_name
+from ..postgres_helper.client_db_list import database_name
 from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgres_connection
 
 def retrieve_all_clients_data(query, connection):
@@ -23,7 +23,10 @@ def fetch_crossclient_data(query, client, fetch_db_name):
     return df
 
 def create_aggregated_tables(queries, clients):
+    print("create_aggregated_tables> Starting process")
+    print(f"create_aggregated_tables> There is {len(queries)} queries")
     for query_key in queries:
+        print(f"create_aggregated_tables> Executing query : '{query_key}': '{queries[query_key]}'")
         query = queries[query_key]
         frames = []
         for client in clients:
