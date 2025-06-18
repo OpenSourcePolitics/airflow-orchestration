@@ -1,13 +1,22 @@
 from sqlalchemy import create_engine, text
 from airflow.hooks.base import BaseHook
+import logging
+
 
 
 def get_postgres_connection(connection_name, database):
     """Extracts PostgreSQL connection details from Airflow and establishes a connection."""
     try:
+        logger = logging.getLogger(__name__)
+
         # Retrieve the connection object using Airflow's BaseHook
         connection = BaseHook.get_connection(connection_name)
 
+        logger.warn(f":DEBUG: get_postgres_connection> Login : {connection.login}")
+        logger.warn(f":DEBUG: get_postgres_connection> Password : {connection.password}")
+        logger.warn(f":DEBUG: get_postgres_connection> Host : {connection.host}")
+        logger.warn(f":DEBUG: get_postgres_connection> Port : {connection.port}")
+        logger.warn(f":DEBUG: get_postgres_connection> postgresql://{user}:{password}@{host}:{port}/{database}")
         # Extract connection details
         user = connection.login
         password = connection.password
