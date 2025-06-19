@@ -6,8 +6,6 @@ import logging
 
 def get_postgres_connection(connection_name, database):
     """Extracts PostgreSQL connection details from Airflow and establishes a connection."""
-    try:
-        logger = logging.getLogger(__name__)
 
         # Retrieve the connection object using Airflow's BaseHook
         connection = BaseHook.get_connection(connection_name)
