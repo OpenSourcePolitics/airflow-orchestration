@@ -16,12 +16,12 @@ def get_postgres_connection(connection_name, database):
         logger.warn(f":DEBUG: get_postgres_connection> Password : {connection.password}")
         logger.warn(f":DEBUG: get_postgres_connection> Host : {connection.host}")
         logger.warn(f":DEBUG: get_postgres_connection> Port : {connection.port}")
-        logger.warn(f":DEBUG: get_postgres_connection> postgresql://{user}:{password}@{host}:{port}/{database}")
         # Extract connection details
         user = connection.login
         password = connection.password
         host = connection.host
         port = connection.port
+        logger.warn(f":DEBUG: get_postgres_connection> postgresql://{user}:{password}@{host}:{port}/{database}")
 
         # Create the SQLAlchemy engine
         return create_engine(f"postgresql://{user}:{password}@{host}:{port}/{database}")

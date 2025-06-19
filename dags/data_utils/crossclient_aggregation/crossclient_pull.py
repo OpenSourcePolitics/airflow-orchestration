@@ -54,7 +54,7 @@ def create_aggregated_tables(queries, clients):
         result = pd.concat(frames)
 
         table_name = f'aggregate_by_{query_key}'
-        engine = get_postgres_connection("main_db_cluster_name", dump_db_name='aggregated_client_data')
+        engine = get_postgres_connection("main_db_cluster_name", "aggregated_client_data")
         connection = engine.connect()
         dump_data_to_postgres(connection, result, table_name, schema='public', if_exists='replace')
         connection.close()
