@@ -8,7 +8,7 @@ import logging
 
 queries = {
     "all_users": "SELECT id AS decidim_user_id, email, created_at, confirmed, sign_in_count, deleted_at, blocked, date_of_birth, gender FROM prod.all_users",
-    "budgets": "SELECT id, title, project_amount, is_selected, budget_id, budget_title, categories, project_url FROM prod.budgets_projects",
+    "budgets": "SELECT id AS budgets_project_id, title, project_amount, is_selected, budget_id, budget_title, categories, project_url FROM prod.budgets_projects",
 }
 
 with DAG(
