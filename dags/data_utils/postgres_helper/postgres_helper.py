@@ -12,16 +12,11 @@ def get_postgres_connection(connection_name, database):
         # Retrieve the connection object using Airflow's BaseHook
         connection = BaseHook.get_connection(connection_name)
 
-        logger.warn(f":DEBUG: get_postgres_connection> Login : {connection.login}")
-        logger.warn(f":DEBUG: get_postgres_connection> Password : {connection.password}")
-        logger.warn(f":DEBUG: get_postgres_connection> Host : {connection.host}")
-        logger.warn(f":DEBUG: get_postgres_connection> Port : {connection.port}")
         # Extract connection details
         user = connection.login
         password = connection.password
         host = connection.host
         port = connection.port
-        logger.warn(f":DEBUG: get_postgres_connection> postgresql://{user}:{password}@{host}:{port}/{database}")
 
         # Create the SQLAlchemy engine
         return create_engine(f"postgresql://{user}:{password}@{host}:{port}/{database}")

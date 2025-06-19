@@ -23,19 +23,6 @@ def fetch_crossclient_data(query, client, fetch_db_name):
 
     return df
 
-def print_hello(queries, clients):
-    print(":DEBUG: print_hello> Starting process")
-    logger = logging.getLogger(__name__)
-    logger.warn(":DEBUG: print_hello> Starting process")
-    logger.warn(f":DEBUG: print_hello> There is {len(queries)} queries")
-
-    for query_key in queries:
-        logger.warn(f":DEBUG: print_hello> Executing query : '{query_key}': '{queries[query_key]}'")
-        print(f":DEBUG: print_hello> Executing query : '{query_key}': '{queries[query_key]}'")
-
-    logger.warn(":DEBUG: print_hello> Bye World! (logger)")
-    print(":DEBUG: print_hello> Bye world!")
-
 def create_aggregated_tables(queries, clients):
     logger = logging.getLogger(__name__)
     logger.warn(":DEBUG: create_aggregated_tables> Starting process")
