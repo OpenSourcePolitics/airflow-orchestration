@@ -15,7 +15,7 @@ queries = {
                 JOIN prod.components on components.id = budgets_projects.decidim_component_id""",
     "participations": """SELECT participation_type, COUNT(*)
                         FROM prod.participations
-                        GROUP BY participation_type"""
+                        GROUP BY participation_type""",
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                         FROM prod.stg_decidim_participatory_processes"""
 }
