@@ -17,7 +17,9 @@ queries = {
                         FROM prod.participations
                         GROUP BY participation_type""",
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
-                        FROM prod.stg_decidim_participatory_processes"""
+                        FROM prod.stg_decidim_participatory_processes""",
+    "components": """SELECT id AS component_id, translated_manifest_name, component_name, published_at, ps_title, ps_subtitle, ps_type
+                        FROM prod.components"""
 }
 
 with DAG(
