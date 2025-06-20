@@ -7,7 +7,7 @@ from data_utils.crossclient_aggregation.crossclient_pull import create_aggregate
 import logging
 
 queries = {
-    "all_users": """SELECT id AS decidim_user_id, email, created_at, confirmed, sign_in_count, deleted_at, blocked, date_of_birth, gender
+    "all_users": """SELECT id AS decidim_user_id, email, created_at, sign_in_count, confirmed, date_of_birth, gender, admin, deleted_at, blocked, spam
                 FROM prod.all_users""",
     "budgets": """SELECT budgets_projects.id AS budgets_project_id, title, project_amount, is_selected, budget_id, budget_title, categories, project_url,
                 components.ps_title
