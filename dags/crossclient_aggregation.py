@@ -7,8 +7,17 @@ from data_utils.crossclient_aggregation.crossclient_pull import create_aggregate
 import logging
 
 queries = {
-    "all_users": "SELECT id AS decidim_user_id, email, created_at, confirmed, sign_in_count, deleted_at, blocked, date_of_birth, gender FROM prod.all_users",
-    "budgets": "SELECT id AS budgets_project_id, title, project_amount, is_selected, budget_id, budget_title, categories, project_url FROM prod.budgets_projects",
+    "all_users": """SELECT id AS decidim_user_id, email, created_at, confirmed, sign_in_count, deleted_at, blocked, date_of_birth, gender
+                FROM prod.all_users""",
+    "budgets": """SELECT id AS budgets_project_id, title, project_amount, is_selected, budget_id, budget_title, categories, project_url,
+                components.ps_title
+                FROM prod.budgets_projects
+                JOIN prod.components on components.id = budgets_projects.decidim_component_id""",
+    "participations": """SELECT participation_type, COUNT(*)
+                        FROM prod.participations
+                        GROUP BY participation_type"""
+    "processes": """SELECT id AS ps_id, title, subtitle, published_at
+                        FROM prod.stg_decidim_participatory_processes"""
 }
 
 with DAG(
