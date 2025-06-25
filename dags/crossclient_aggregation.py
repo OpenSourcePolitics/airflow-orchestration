@@ -15,9 +15,9 @@ queries = {
                 components.ps_title
                 FROM prod.budgets_projects
                 JOIN prod.components on components.id = budgets_projects.decidim_component_id""",
-    "participations": """SELECT participation_type, COUNT(participation_id) AS participation_count, COUNT(DISTINCT user_id) AS participating_user_count
+    "participations": """SELECT participation_type, decidim_component_id, COUNT(participation_id) AS participation_count, COUNT(DISTINCT user_id) AS participating_user_count
                         FROM prod.participations
-                        GROUP BY participation_type""",
+                        GROUP BY participation_type, decidim_component_id""",
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                     FROM prod.stg_decidim_participatory_processes""",
     "components": """SELECT id AS component_id, manifest_name, component_name, published_at, ps_title, ps_subtitle, ps_type
