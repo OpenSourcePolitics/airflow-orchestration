@@ -19,6 +19,10 @@ queries = {
                         FROM prod.participations
 						JOIN prod.components on components.id = decidim_component_id
                         GROUP BY participation_type, component_name, ps_title""",
+    "participation_date": """SELECT DISTINCT participation_date::date, COUNT(participation_id) AS participation_count
+                        FROM prod.participations
+                        GROUP BY participation_date
+						ORDER BY participation_date""",
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                     FROM prod.stg_decidim_participatory_processes""",
     "components": """SELECT id AS component_id, manifest_name, component_name, published_at, ps_title, ps_subtitle, ps_type
