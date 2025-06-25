@@ -29,7 +29,7 @@ queries = {
                     SELECT 'assembly' AS type, id, title, slug, published_at
                     FROM prod.stg_decidim_assemblies
                     ), initiatives AS (
-                    SELECT 'initiatives' AS type, 0 AS id, 'N/A' AS title, 'N/A' AS slug, NULL AS published_at
+                    SELECT 'initiatives' AS type, 0 AS id, 'N/A' AS title, 'N/A' AS slug, NULL::date AS published_at
                     FROM prod.stg_decidim_initiatives LIMIT 1
                     )
                     SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies"""}
