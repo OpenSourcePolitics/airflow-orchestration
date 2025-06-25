@@ -15,24 +15,25 @@ queries = {
                 components.ps_title
                 FROM prod.budgets_projects
                 JOIN prod.components on components.id = budgets_projects.decidim_component_id""",
-    "participations": """SELECT participation_type, decidim_component_id, COUNT(participation_id) AS participation_count, COUNT(DISTINCT user_id) AS participating_user_count
+    "participations": """SELECT participation_type, components.component_name, components.ps_title, COUNT(participation_id) AS participation_count, COUNT(DISTINCT user_id) AS participating_user_count
                         FROM prod.participations
-                        GROUP BY participation_type, decidim_component_id""",
+						JOIN prod.components on components.id = decidim_component_id
+                        GROUP BY participation_type, component_name, ps_title""",
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                     FROM prod.stg_decidim_participatory_processes""",
     "components": """SELECT id AS component_id, manifest_name, component_name, published_at, ps_title, ps_subtitle, ps_type
                     FROM prod.components""",
     "participatory_spaces" : """WITH participatory_processes AS (
-                    SELECT type, id, title, slug, published_at
-                    FROM prod.stg_decidim_participatory_processes
-                    ), assemblies AS (
-                    SELECT 'assembly' AS type, id, title, slug, published_at
-                    FROM prod.stg_decidim_assemblies
-                    ), initiatives AS (
-                    SELECT 'initiatives' AS type, 0 AS id, 'N/A' AS title, 'N/A' AS slug, NULL::date AS published_at
-                    FROM prod.stg_decidim_initiatives LIMIT 1
-                    )
-                    SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies"""}
+                            SELECT type, id, title, slug, published_at
+                            FROM prod.stg_decidim_participatory_processes
+                            ), assemblies AS (
+                            SELECT 'assembly' AS type, id, title, slug, published_at
+                            FROM prod.stg_decidim_assemblies
+                            ), initiatives AS (
+                            SELECT 'initiatives' AS type, 0 AS id, 'N/A' AS title, 'N/A' AS slug, NULL::date AS published_at
+                            FROM prod.stg_decidim_initiatives LIMIT 1
+                            )
+                            SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies"""}
 
 with DAG(
         dag_id='crossclient_aggregation',
