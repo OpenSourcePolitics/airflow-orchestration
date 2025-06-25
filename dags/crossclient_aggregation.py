@@ -21,7 +21,14 @@ queries = {
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                     FROM prod.stg_decidim_participatory_processes""",
     "components": """SELECT id AS component_id, manifest_name, component_name, published_at, ps_title, ps_subtitle, ps_type
-                    FROM prod.components"""}
+                    FROM prod.components""",
+    "participatory_spaces" : """WITH participatory_processes AS (
+                    SELECT type, id, title, slug, published_at FROM prod.stg_decidim_participatory_processes
+                    ), assemblies AS (
+                    SELECT 'assembly' AS type, id, title, slug, published_at
+                    FROM prod.stg_decidim_assemblies
+                    )
+                    SELECT * FROM participatory_processes UNION ALL SELECT * FROM assemblies"""}
 
 with DAG(
         dag_id='crossclient_aggregation',
