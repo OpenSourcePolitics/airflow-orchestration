@@ -38,7 +38,7 @@ queries = {
                                 FROM prod.stg_decidim_initiatives LIMIT 1
                                 )
                                 SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies""",
-    "referrers": """SELECT date, sub_type, SUM(nb_visits) FROM prod.int_matomo_referrers
+    "referrers": """SELECT date, sub_type, SUM(nb_visits) AS nb_visits FROM prod.int_matomo_referrers
                     GROUP BY date, sub_type"""}
 
 with DAG(
