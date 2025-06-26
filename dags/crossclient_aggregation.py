@@ -8,7 +8,7 @@ import logging
 
 queries = {
     "all_users": """SELECT id AS decidim_user_id, email, date_of_birth, gender, created_at, sign_in_count, confirmed, managed, admin, deleted_at, blocked, spam, spam_reported_at, spam_probability
-                FROM prod.all_users""",
+                    FROM prod.all_users""",
     "users": """SELECT id AS decidim_user_id, email, date_of_birth, gender, created_at, sign_in_count, confirmed, managed, admin, deleted_at, blocked
                 FROM prod.users""",
     "budgets": """SELECT budgets_projects.id AS budgets_project_id, title, project_amount, is_selected, budget_id, budget_title, categories, project_url,
@@ -20,24 +20,26 @@ queries = {
 						JOIN prod.components on components.id = decidim_component_id
                         GROUP BY participation_type, component_name, ps_title""",
     "participation_date": """SELECT DISTINCT participation_date::date, COUNT(participation_id) AS participation_count
-                        FROM prod.participations
-                        GROUP BY participation_date
-						ORDER BY participation_date""",
+                            FROM prod.participations
+                            GROUP BY participation_date
+						    ORDER BY participation_date""",
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                     FROM prod.stg_decidim_participatory_processes""",
     "components": """SELECT id AS component_id, manifest_name, component_name, published_at, ps_title, ps_subtitle, ps_type
                     FROM prod.components""",
-    "participatory_spaces" : """WITH participatory_processes AS (
-                            SELECT type, id, title, slug, published_at
-                            FROM prod.stg_decidim_participatory_processes
-                            ), assemblies AS (
-                            SELECT 'assembly' AS type, id, title, slug, published_at
-                            FROM prod.stg_decidim_assemblies
-                            ), initiatives AS (
-                            SELECT 'initiatives' AS type, 0 AS id, 'N/A' AS title, 'N/A' AS slug, NULL::date AS published_at
-                            FROM prod.stg_decidim_initiatives LIMIT 1
-                            )
-                            SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies"""}
+    "participatory_spaces": """WITH participatory_processes AS (
+                                SELECT type, id, title, slug, published_at
+                                FROM prod.stg_decidim_participatory_processes
+                                ), assemblies AS (
+                                SELECT 'assembly' AS type, id, title, slug, published_at
+                                FROM prod.stg_decidim_assemblies
+                                ), initiatives AS (
+                                SELECT 'initiatives' AS type, 0 AS id, 'N/A' AS title, 'N/A' AS slug, NULL::date AS published_at
+                                FROM prod.stg_decidim_initiatives LIMIT 1
+                                )
+                                SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies""",
+    "referrers": """SELECT date, sub_type, SUM(nb_visits) FROM prod.int_matomo_referrers
+                    GROUP BY date, sub_type"""}
 
 with DAG(
         dag_id='crossclient_aggregation',
