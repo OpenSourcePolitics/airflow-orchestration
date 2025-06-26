@@ -24,7 +24,7 @@ queries = {
                             FROM prod.participations
 							GROUP BY participation_date
                             )
-                            SELECT participation_date, SUM(participation_count) FROM group_by_date
+                            SELECT participation_date, SUM(participation_count) AS participation_count FROM group_by_date
                             GROUP BY participation_date""",
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                     FROM prod.stg_decidim_participatory_processes""",
