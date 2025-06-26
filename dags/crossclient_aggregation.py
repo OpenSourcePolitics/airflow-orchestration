@@ -38,7 +38,7 @@ queries = {
                             FROM prod.stg_decidim_initiatives LIMIT 1
                             )
                             SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies""",
-    "region": """SELECT date, region, region_name, SUM(nb_visits) FROM matomo.users_city
+    "region": """SELECT date, region, region_name, SUM(nb_visits) FROM prod.stg_matomo_users_city
                 GROUP BY date, region, region_name"""}
 
 with DAG(
