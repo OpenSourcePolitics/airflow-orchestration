@@ -22,7 +22,6 @@ queries = {
     "participation_date": """WITH group_by_date AS (
                             SELECT participation_date::date, COUNT(participation_id) AS participation_count
                             FROM prod.participations
-							WHERE participation_date BETWEEN '2025-02-10' AND '2025-02-17'
 							GROUP BY participation_date
                             )
                             SELECT participation_date, SUM(participation_count) FROM group_by_date
