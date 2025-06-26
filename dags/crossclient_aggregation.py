@@ -45,7 +45,9 @@ queries = {
                     FROM prod.int_matomo_referrers
                     GROUP BY date, sub_type""",
     "initiatives": """SELECT id, created_at, parsed_state
-                    FROM prod.initiatives"""}
+                    FROM prod.initiatives""",
+    "country_of_visit": """SELECT date, code, nb_visits
+                    FROM matomo.users_country"""}
 
 with DAG(
         dag_id='crossclient_aggregation',
