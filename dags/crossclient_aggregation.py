@@ -37,7 +37,9 @@ queries = {
                             SELECT 'initiatives' AS type, 0 AS id, 'N/A' AS title, 'N/A' AS slug, NULL::date AS published_at
                             FROM prod.stg_decidim_initiatives LIMIT 1
                             )
-                            SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies"""}
+                            SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies""",
+    "region": """SELECT date, region, region_name, SUM(nb_visits) FROM prod.stg_matomo_users_city
+                GROUP BY date, region, region_name"""}
 
 with DAG(
         dag_id='crossclient_aggregation',
