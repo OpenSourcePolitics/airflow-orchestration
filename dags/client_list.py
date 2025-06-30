@@ -27,6 +27,7 @@ clients = [
     "ps_belge",
     "chambery",
     "tours",
+    "nice",
     "valbonne",
     "villeurbanne"
 ]
