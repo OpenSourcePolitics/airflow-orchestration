@@ -4,7 +4,7 @@ from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgre
 
 # do NOT add ps_belge 1 and 92 
 questionnaires_ids_dict = {
-    "marseille": [456,559,560],
+    "marseille": [456,559,560,614],
     "lyon": [611,653],
 }
 
