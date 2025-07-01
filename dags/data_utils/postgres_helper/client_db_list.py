@@ -21,6 +21,7 @@ database_name = {
     "meyzieu": "meyzieu",
     "nanterre": "nanterre",
     "nets4dem": "nets4dem",
+    "nice": "nice",
     "plaine_commune": "plaine_commune",
     "ps_belge": "ps_belge",
     "real_deal": "real_deal",
