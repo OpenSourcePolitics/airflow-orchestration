@@ -3,7 +3,7 @@ clients = {
         "postgres": {
             "database_name": "angers"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Angers", "database_id": 4, "language": "fr"
             },
     },
@@ -11,7 +11,7 @@ clients = {
         "postgres": {
             "database_name": "arcueil"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Arcueil", "database_id": 205, "language": "fr"
             },
     },
@@ -19,15 +19,15 @@ clients = {
         "postgres": {
             "database_name": "bagneux"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Bagneux", "database_id": 206, "language": "fr"
         },
     },
     "cachan": {
         "postgres": {
-            "database_name": "angers"
+            "database_name": "cachan"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Cachan", "database_id": 213, "language": "fr"
         },
     },
@@ -35,7 +35,7 @@ clients = {
         "postgres": {
             "database_name": "casa"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "CASA", "database_id": 59, "language": "fr"
         },
     },
@@ -43,7 +43,7 @@ clients = {
         "postgres": {
             "database_name": "cdc"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Cour des Comptes", "database_id": 56, "language": "fr"
         },
     },
@@ -51,7 +51,7 @@ clients = {
         "postgres": {
             "database_name": "cea"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "C€A", "database_id": 39, "language": "fr"
         },
     },
@@ -59,7 +59,7 @@ clients = {
         "postgres": {
             "database_name": "cese"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "CESE", "database_id": 129, "language": "fr"
         },
     },
@@ -67,7 +67,7 @@ clients = {
         "postgres": {
             "database_name": "chambery"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Chambéry", "database_id": 208, "language": "fr"
         },
     },
@@ -75,7 +75,7 @@ clients = {
         "postgres": {
             "database_name": "colombes"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Colombes", "database_id": 30, "language": "fr"
         },
     },
@@ -83,7 +83,7 @@ clients = {
         "postgres": {
             "database_name": "cultuur_connect"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Cultuurconnect", "database_id": 210, "language": "nl"
         },
     },
@@ -91,7 +91,7 @@ clients = {
         "postgres": {
             "database_name": "decidim_0_29_multilang"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Démo", "database_id": 218, "language": "fr"
         },
     },
@@ -99,7 +99,7 @@ clients = {
         "postgres": {
             "database_name": "grand_nancy"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Grand Nancy", "database_id": 170, "language": "fr"
         },
     },
@@ -107,7 +107,7 @@ clients = {
         "postgres": {
             "database_name": "lyon"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Lyon", "database_id": 73, "language": "fr"
         },
     },
@@ -115,7 +115,7 @@ clients = {
         "postgres": {
             "database_name": "loire-atlantique"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Loire-Atlantique", "database_id": 47, "language": "fr"
         },
     },
@@ -123,7 +123,7 @@ clients = {
         "postgres": {
             "database_name": "malakoff"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Malakoff", "database_id": 207, "language": "fr"
         },
     },
@@ -131,7 +131,7 @@ clients = {
         "postgres": {
             "database_name": "marseille"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Marseille", "database_id": 165, "language": "fr"
         },
     },
@@ -139,7 +139,7 @@ clients = {
         "postgres": {
             "database_name": "mel"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "MEL", "database_id": 214, "language": "fr"
         },
     },
@@ -147,7 +147,7 @@ clients = {
         "postgres": {
             "database_name": "montpellier"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Métropole de Montpellier", "database_id": 163, "language": "fr"
         },
     },
@@ -155,7 +155,7 @@ clients = {
         "postgres": {
             "database_name": "meyzieu"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Meyzieu", "database_id": 166, "language": "fr"
         },
     },
@@ -163,7 +163,7 @@ clients = {
         "postgres": {
             "database_name": "nanterre"
         },
-        "metabase":{
+        "metabase": {
             "collection_name": "Nanterre", "database_id": 211, "language": "fr"
         },
     },

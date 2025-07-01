@@ -1,4 +1,4 @@
-from client_list import clients
+from clients import clients
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator

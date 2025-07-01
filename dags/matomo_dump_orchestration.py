@@ -2,7 +2,7 @@ import pendulum
 from airflow.decorators import dag
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
-from client_list import clients
+from client import clients
 from data_utils.matomo_pull.matomo_helper import fetch_and_dump_data
 from data_utils.alerting.alerting import task_failed
 

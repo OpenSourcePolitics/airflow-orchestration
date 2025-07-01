@@ -1,6 +1,6 @@
 from airflow.models import Variable
 from airflow.decorators import dag
-from client_list import clients
+from clients import clients
 from data_utils.metabase_automation.metabase_airflow_task import prepare_sub_collection, \
     create_copy_dashboard_task, create_update_dashboard_task
 
