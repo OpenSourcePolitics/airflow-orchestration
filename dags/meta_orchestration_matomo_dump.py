@@ -1,6 +1,6 @@
 import pendulum
 
-from client import clients
+from clients import clients
 from data_utils.dags_utils.orchestration_utils import create_orchestration_dag
 
 default_args = {
