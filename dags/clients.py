@@ -196,7 +196,7 @@ clients = {
             "database_name": "ps_belge"
         },
         "metabase":{
-            "collection_name": "PS Belge", "database_id": 217, "language": "fr"
+            "collection_name": "PS belge", "database_id": 217, "language": "fr"
         },
     },
     "real_deal": {
