@@ -13,6 +13,6 @@ description = 'Orchestrator DAG for Metabase Generic Dashboard update and creati
 schedule_interval = None  # Trigger manually
 start_date = pendulum.datetime(2024, 11, 11, tz="UTC")
 
-metabase_generic_dashboard_dags = [f"metabase_generic_dashboard_orchestration_{client}" for client in clients]
+metabase_generic_dashboard_dags = [f"metabase_generic_dashboard_orchestration_{client}" for client in clients.keys()]
 
 dag = create_orchestration_dag(dag_id, description, schedule_interval, start_date, metabase_generic_dashboard_dags)
