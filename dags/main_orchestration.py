@@ -86,16 +86,18 @@ def create_main_orchestration_dag(client_name):
             """
             Cleanup Airbyte metadata by dropping unnecessary tables.
             """
-            airbyte_cleanup(client_name)
+            database_name = clients[client_name]["postgres"]["database_name"]
+            airbyte_cleanup(database_name)
 
         def trigger_questionnaire_pivot():
             """
             Create filters table for selected questionnaires.
             """
+            database_name = clients[client_name]["postgres"]["database_name"]
             return PythonOperator(
                 task_id='create_questionnaire_filters',
                 python_callable=create_questionnaire_filters,
-                op_args=[client_name],
+                op_args=[database_name, client_name],
                 on_failure_callback=task_failed,
                 )
 

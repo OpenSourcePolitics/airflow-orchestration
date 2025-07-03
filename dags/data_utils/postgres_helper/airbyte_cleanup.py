@@ -1,5 +1,4 @@
 from .postgres_helper import get_postgres_connection
-from ...clients import clients
 from sqlalchemy import text
 import time
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -87,6 +86,6 @@ def drop_airbyte_metadata(engine):
 
     connection.close()
 
-def airbyte_cleanup(client_name):
-    engine = get_postgres_connection("main_db_cluster_name", clients[client_name]["postgres"]["database_name"])
+def airbyte_cleanup(database_name):
+    engine = get_postgres_connection("main_db_cluster_name", database_name)
     drop_airbyte_metadata(engine)
