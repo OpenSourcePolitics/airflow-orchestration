@@ -2,7 +2,7 @@ import pendulum
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from data_utils.alerting.alerting import task_failed
-from client_list import clients
+from clients import clients
 from data_utils.crossclient_aggregation.crossclient_pull import create_aggregated_tables
 import logging
 

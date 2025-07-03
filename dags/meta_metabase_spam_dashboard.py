@@ -1,6 +1,6 @@
 import pendulum
 
-from client_list import clients
+from clients import clients
 from data_utils.dags_utils.orchestration_utils import create_orchestration_dag
 
 default_args = {
@@ -13,6 +13,6 @@ description = 'Orchestrator DAG for Metabase Spam Dashboard update and creation'
 schedule_interval = None  # Trigger manually
 start_date = pendulum.datetime(2024, 11, 11, tz="UTC")
 
-metabase_spam_dashboard_dags = [f"metabase_spam_dashboard_orchestration_{client}" for client in clients]
+metabase_spam_dashboard_dags = [f"metabase_spam_dashboard_orchestration_{client}" for client in clients.keys()]
 
 dag = create_orchestration_dag(dag_id, description, schedule_interval, start_date, metabase_spam_dashboard_dags)

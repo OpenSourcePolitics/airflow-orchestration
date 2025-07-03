@@ -1,4 +1,4 @@
-from client_list import clients
+from clients import clients
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
@@ -86,16 +86,18 @@ def create_main_orchestration_dag(client_name):
             """
             Cleanup Airbyte metadata by dropping unnecessary tables.
             """
-            airbyte_cleanup(client_name)
+            database_name = clients[client_name]["postgres"]["database_name"]
+            airbyte_cleanup(database_name)
 
         def trigger_questionnaire_pivot():
             """
             Create filters table for selected questionnaires.
             """
+            database_name = clients[client_name]["postgres"]["database_name"]
             return PythonOperator(
                 task_id='create_questionnaire_filters',
                 python_callable=create_questionnaire_filters,
-                op_args=[client_name],
+                op_args=[database_name, client_name],
                 on_failure_callback=task_failed,
                 )
 
@@ -126,5 +128,5 @@ def create_main_orchestration_dag(client_name):
 
 
 # Dynamically generate DAGs for all clients
-for client in clients:
+for client in clients.keys():
     globals()[f"main_orchestration_{client}"] = create_main_orchestration_dag(client_name=client)

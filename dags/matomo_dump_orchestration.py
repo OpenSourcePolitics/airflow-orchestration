@@ -2,7 +2,7 @@ import pendulum
 from airflow.decorators import dag
 from airflow.operators.python import PythonOperator
 from airflow.models import Variable
-from client_list import clients
+from clients import clients
 from data_utils.matomo_pull.matomo_helper import fetch_and_dump_data
 from data_utils.alerting.alerting import task_failed
 
@@ -35,5 +35,5 @@ def create_matomo_dump_dag(client_name):
     return matomo_dump()
 
 
-for client in clients:
+for client in clients.keys():
     globals()[f"matomo_dump_{client}"] = create_matomo_dump_dag(client_name=client)
