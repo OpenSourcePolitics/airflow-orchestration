@@ -5,7 +5,6 @@ from data_utils.metabase_automation.metabase_airflow_task import prepare_sub_col
     create_copy_dashboard_task, create_update_dashboard_task
 
 
-from data_utils.metabase_automation.metabase_generic_dashboard_data import metabase_generic_dashboard_data
 from data_utils.alerting.alerting import task_failed
 
 default_args = {
@@ -24,7 +23,7 @@ def create_metabase_generic_dashboard_dag(client_name):
     )
     def create_and_update_generic_dashboard():
 
-        client_metadata = metabase_generic_dashboard_data[client_name]
+        client_metadata = clients[client_name]["metabase"]
         clients_collection_name = client_metadata["collection_name"]
         client_database_id = client_metadata["database_id"]
 
