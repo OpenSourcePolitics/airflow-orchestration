@@ -1,5 +1,4 @@
 import pandas as pd
-from ..postgres_helper.client_db_list import database_name
 from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgres_connection
 import logging
 
@@ -31,10 +30,10 @@ def create_aggregated_tables(queries, clients):
         logger.warn(f":DEBUG: create_aggregated_tables> Executing query : '{query_key}': '{queries[query_key]}'")
         query = queries[query_key]
         frames = []
-        for client in clients:
+        for client in clients.keys():
+            fetch_db_name = clients[client]["postgres"]["database_name"]
             logger.warn(f":DEBUG: create_aggregated_tables> Client: {client}")
-            logger.warn(f":DEBUG: create_aggregated_tables> DB Name: {database_name[client]}")
-            fetch_db_name = database_name[client]
+            logger.warn(f":DEBUG: create_aggregated_tables> DB Name: {fetch_db_name}")
             df = fetch_crossclient_data(query, client, fetch_db_name)
             frames.append(df)
         

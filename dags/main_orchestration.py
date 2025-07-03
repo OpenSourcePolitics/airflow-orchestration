@@ -126,5 +126,5 @@ def create_main_orchestration_dag(client_name):
 
 
 # Dynamically generate DAGs for all clients
-for client in clients:
+for client in clients.keys():
     globals()[f"main_orchestration_{client}"] = create_main_orchestration_dag(client_name=client)

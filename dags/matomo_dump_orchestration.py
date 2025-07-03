@@ -35,5 +35,5 @@ def create_matomo_dump_dag(client_name):
     return matomo_dump()
 
 
-for client in clients:
+for client in clients.keys():
     globals()[f"matomo_dump_{client}"] = create_matomo_dump_dag(client_name=client)

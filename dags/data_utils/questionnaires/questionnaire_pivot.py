@@ -1,5 +1,5 @@
 import pandas as pd
-from ..postgres_helper.client_db_list import database_name
+from ...clients import clients
 from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgres_connection
 
 # do NOT add ps_belge 1 and 92 
@@ -69,7 +69,8 @@ def fetch_and_dump_answers_data(db_name, questionnaire_id):
     connection.close()
 
 def create_questionnaire_filters(client_name):
-    db_name = database_name[client_name]
+    db_name = clients[client_name]["postgres"]["database_name"]
+
     questionnaires_ids = questionnaires_ids_dict.get(client_name, [])
     
     for questionnaire_id in questionnaires_ids:

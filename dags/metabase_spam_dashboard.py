@@ -49,5 +49,5 @@ enabled = Variable.get("metabase_spam_dashboard_enabled")
 
 if enabled == "True":
     # Dynamically generate DAGs for all clients
-    for client in clients:
+    for client in clients.keys():
         globals()[f"metabase_generic_dashboard_orchestration_{client}"] = create_metabase_generic_dashboard_dag(client_name=client)

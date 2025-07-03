@@ -256,3 +256,6 @@ clients = {
         },
     },
 }
+
+for client in clients.keys():
+    print(client)
