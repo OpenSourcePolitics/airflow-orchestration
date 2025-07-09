@@ -87,14 +87,6 @@ clients = {
             "collection_name": "Cultuurconnect", "database_id": 210, "language": "nl"
         },
     },
-    "decidim_0_29_multilang": {
-        "postgres": {
-            "database_name": "decidim_0_29_multilang"
-        },
-        "metabase": {
-            "collection_name": "Démo", "database_id": 218, "language": "fr"
-        },
-    },
     "grand_nancy": {
         "postgres": {
             "database_name": "grand_nancy"
