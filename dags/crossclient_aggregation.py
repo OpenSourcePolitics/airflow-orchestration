@@ -60,7 +60,7 @@ with DAG(
         default_args={'owner': 'airflow'},
         schedule='45 21 * * *',
         start_date=pendulum.datetime(2025, 6, 17, tz="UTC"),
-        catchup=True
+        catchup=False
 
 ) as dag:
     aggregate_crossclient_data = PythonOperator(
