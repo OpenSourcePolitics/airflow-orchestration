@@ -8,14 +8,14 @@ from airflow.models import Variable
 connection = BaseHook.get_connection("grist_osp")
 grist_api_key = connection.password
 grist_server = connection.host
-grist_ca_doc_id = Variable.get("grist_all_clients_doc_id")
+grist_ca_doc_id = Variable.get("grist_ca_doc_id")
 
 # Get api key from your Profile Settings, and run with GRIST_API_KEY=<key>
 api = GristDocAPI(grist_ca_doc_id, server=grist_server, api_key=grist_api_key)
 
 
 def fetch_and_dump_data(connection_name):
-    data = api.fetch_table('Liste_de_tous_les_clients')
+    data = api.fetch_table('Liste_clients_memoire')
     df = pd.DataFrame(data)
 
     df['Prestations_2025'] = df['Prestations_2025'].astype(str)
