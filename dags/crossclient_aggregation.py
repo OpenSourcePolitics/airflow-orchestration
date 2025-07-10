@@ -69,8 +69,9 @@ with DAG(
         op_args=[queries, clients],
         dag=dag,
         on_failure_callback=task_failed,
+    )
 
-        fetch_grist_data = PythonOperator(
+    fetch_grist_data = PythonOperator(
         task_id='fetch_and_dump_grist_data',
         python_callable=fetch_and_dump_data,
         op_args=[f"{connection_name}"],
