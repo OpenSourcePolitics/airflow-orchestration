@@ -4,8 +4,10 @@ from airflow.operators.python import PythonOperator
 from data_utils.alerting.alerting import task_failed
 from clients import clients
 from data_utils.crossclient_aggregation.crossclient_pull import create_aggregated_tables
+from data_utils.grist.grist_pull_all_clients import fetch_and_dump_data
 import logging
 
+connection_name="main_db_cluster_name"
 queries = {
     "all_users": """SELECT id AS decidim_user_id, email, date_of_birth, gender, created_at, sign_in_count, current_sign_in_at, confirmed, managed, admin, deleted_at, blocked, spam, spam_reported_at, spam_probability
                     FROM prod.all_users""",
@@ -67,6 +69,13 @@ with DAG(
         op_args=[queries, clients],
         dag=dag,
         on_failure_callback=task_failed,
+
+        fetch_grist_data = PythonOperator(
+        task_id='fetch_and_dump_grist_data',
+        python_callable=fetch_and_dump_data,
+        op_args=[f"{connection_name}"],
+        dag=dag,
+        on_failure_callback=task_failed,
     )
 
     logger = logging.getLogger(__name__)
@@ -74,4 +83,5 @@ with DAG(
     logger.warn(f":DEBUG: crossclient_aggregation> Queries : {queries}")
     logger.warn(f":DEBUG: crossclient_aggregation> Clients : {clients}")
     aggregate_crossclient_data
+    fetch_grist_data
     logger.warn(f":DEBUG: crossclient_aggregation> DAG terminated.")
