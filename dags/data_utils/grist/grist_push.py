@@ -35,8 +35,19 @@ def dump_to_grist(df):
 
     #new data should be list of objects with column IDs as attributes
     #(e.g. namedtuple or sqlalchemy result rows)
-    new_data : pd.to_sql(df)
-    api.sync_table(table_name, new_data, key_cols="id", other_cols, grist_fetch=None, chunk_size=None, filters=None)
+    new_data = pd.to_sql(df)
+    key_cols = [["id", "id"[,"Numeric"]]]
+    other_cols = [
+                    ["decidim_participatory_space_slug", "decidim_participatory_space_slug"[,"Text"]]
+                    ["title", "title"[,"Text"]],
+                    ["body", "body"[,"Text"]],
+                    ["url", "url"[,"Text"]],
+                    ["translated_state", "translated_state"[,"Text"]],
+                    ["categories", "categories"[,"Text"]],
+                    ["comments_count", "comments_count"[,"Numeric"]],
+                    ["endorsements_count", "endorsements_count"[,"Numeric"]]
+                ]
+    api.sync_table(table_name, new_data, key_cols, other_cols, grist_fetch=None, chunk_size=None, filters=None)
 
     #json_data = df.to_json()
     #call(url="https://{grist_server}/api/docs/{grist_cdc_doc_id}/tables/{table_name}/records?allow_empty_require=True", json_data, method="PUT", prefix=None)[
