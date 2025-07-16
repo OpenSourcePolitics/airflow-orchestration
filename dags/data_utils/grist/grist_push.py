@@ -39,7 +39,7 @@ def dump_to_grist(df):
     api.sync_table(table_name, new_data, key_cols="id", other_cols, grist_fetch=None, chunk_size=None, filters=None)
 
     #json_data = df.to_json()
-    #call(url="https://{grist_server}/api/docs/{grist_cdc_doc_id}/tables/{table_name}/columns?replaceall=True", json_data, method="PUT", prefix=None)[
+    #call(url="https://{grist_server}/api/docs/{grist_cdc_doc_id}/tables/{table_name}/records?allow_empty_require=True", json_data, method="PUT", prefix=None)[
     
 
 def fetch_and_dump_data(clients):
