@@ -24,11 +24,12 @@ def retrieve_sql_data(engine):
                     body,
                     url,
                     translated_state,
-                    categories,
+                    first_category,
                     comments_count,
-                    endorsements_count
+                    endorsements_count,
+                    CURRENT_TIMESTAMP(3) as imported_at
                 FROM prod.proposals
-                ORDER BY id DESC
+                ORDER BY id
             """
     with engine.connect() as connection:
         result = connection.execute(text(query))
