@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, URL, text
 from airflow.hooks.base import BaseHook
 import logging
 
@@ -9,14 +9,16 @@ def get_postgres_connection(connection_name, database):
         connection = BaseHook.get_connection(connection_name)
 
         url_object = URL.create(
-            user = connection.login
-            password = connection.password
-            host = connection.host
-            port = connection.port
+            "postgresql",
+            username = connection.login,
+            password = connection.password,
+            host = connection.host,
+            port = connection.port,
+            database = database,
         )
 
         # Create the SQLAlchemy engine
-        return create_engine(f"postgresql://{user}:{password}@{host}:{port}/{database}")
+        return create_engine(url_object)
 
 
     except Exception as e:
