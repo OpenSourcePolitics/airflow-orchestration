@@ -53,7 +53,7 @@ def dump_to_grist(rows_to_dump):
                 ]
     api.sync_table(table_name, new_data, key_cols, other_cols, grist_fetch=None, chunk_size=200, filters=None)    
 
-def fetch_and_dump_cdc_data(clients):
+def fetch_and_dump_cdc_data(connection_name, clients):
 
     client = "cdc"
     db_name = clients[client]["postgres"]["database_name"]
