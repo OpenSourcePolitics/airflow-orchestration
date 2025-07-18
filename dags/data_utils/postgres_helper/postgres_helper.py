@@ -2,8 +2,6 @@ from sqlalchemy import create_engine, text
 from airflow.hooks.base import BaseHook
 import logging
 
-
-
 def get_postgres_connection(connection_name, database):
     """Extracts PostgreSQL connection details from Airflow and establishes a connection."""
     try:
