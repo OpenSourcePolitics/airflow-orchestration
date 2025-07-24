@@ -11,6 +11,38 @@ queries = {
                     FROM prod.all_users""",
     "users": """SELECT id AS decidim_user_id, email, date_of_birth, gender, created_at, sign_in_count, current_sign_in_at, confirmed, managed, admin, deleted_at, blocked
                 FROM prod.users""",
+    "users_growth": """
+                    WITH months AS(
+                        SELECT
+                            DATE_TRUNC('month', created_at) AS created_at
+                        FROM prod.users
+                    ),
+                    months_totals AS(
+                        SELECT
+                            months.created_at,
+                            SUM(COUNT(*)) OVER (
+                                ORDER BY months.created_at ASC ROWS UNBOUNDED PRECEDING
+                            ) AS user_count
+                        FROM months
+                        GROUP BY created_at
+                    ),
+                    months_totals_offset AS(
+                        SELECT
+                            months_totals.created_at,
+                            months_totals.user_count,
+                            LAG(months_totals.user_count, 12) OVER (
+                                ORDER BY months_totals.created_at ASC
+                            ) AS user_count_12_months_ago
+                        FROM months_totals
+                        GROUP BY created_at, user_count
+                    )
+                    SELECT
+                        created_at,
+                        user_count,
+                        user_count_12_months_ago
+                    FROM months_totals_offset
+                    WHERE (created_at >= DATE_TRUNC('month', NOW()))                    
+                    """,
     "budgets": """SELECT budgets_projects.id AS budgets_project_id, title, project_amount, is_selected, budget_id, budget_title, categories, project_url,
                 components.ps_title
                 FROM prod.budgets_projects
