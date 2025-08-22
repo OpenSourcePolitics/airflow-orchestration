@@ -47,8 +47,10 @@ queries = {
                 components.ps_title
                 FROM prod.budgets_projects
                 JOIN prod.components on components.id = budgets_projects.decidim_component_id""",
-    "budgets_budgets": """SELECT id AS budget_id, title, decidim_component_id, total_budget
-                FROM prod.stg_decidim_budgets""",
+    "budgets_budgets": """SELECT stg_decidim_budgets.id AS budget_id, title, decidim_component_id, total_budget,
+                components.ps_title
+                FROM prod.stg_decidim_budgets
+                JOIN prod.components on components.id = stg_decidim_budgets.decidim_component_id""",
     "participations": """SELECT participation_type, components.component_name, components.ps_title, COUNT(participation_id) AS participation_count, COUNT(DISTINCT user_id) AS participating_user_count
                         FROM prod.participations
 						JOIN prod.components on components.id = decidim_component_id
