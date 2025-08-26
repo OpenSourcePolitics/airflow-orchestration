@@ -81,6 +81,15 @@ queries = {
                                 FROM prod.stg_decidim_initiatives LIMIT 1
                                 )
                                 SELECT * FROM participatory_processes UNION ALL SELECT * FROM initiatives UNION ALL SELECT * FROM assemblies""",
+    "form_answerers_status": """WITH answers AS (
+                                SELECT decidim_user_id, session_token,
+	                            CASE WHEN decidim_user_id IS NULL THEN false ELSE true END AS registered_answerer
+                                FROM prod.forms_answers
+                                GROUP BY session_token, decidim_user_id
+                                )
+                                SELECT registered_answerer, count(*)
+                                FROM answers
+                                GROUP BY registered_answerer""",
     "referrers": """SELECT date, sub_type, SUM(nb_visits) AS nb_visits
                     FROM prod.int_matomo_referrers
                     GROUP BY date, sub_type""",
