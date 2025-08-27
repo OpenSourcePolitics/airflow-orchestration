@@ -73,19 +73,16 @@ def dump_df_to_grist_table(
     the 2nd element of each colspec (e.g., 'email', 'prenom', ... below).
     """
 
-    # Your colspecs (unchanged)
     key_cols = [
-        ["Email", "email", "Text"],   # 2nd item -> attr name 'email'
-        ["Prenom", "prenom", "Text"],   # 2nd item -> attr name 'prenom'
-        ["Nom", "nom", "Text"],   # 2nd item -> attr name 'nom'
+        ["Email", "email", "Text"],
+        ["Prenom", "prenom", "Text"],
+        ["Nom", "nom", "Text"],
     ]
     other_cols = [
-        ("Email_verifie", "email_verifie", "Toggle"),  # attr 'email_verifie'
-        ("Date_de_creation", "date_de_creation", "Date"),    # attr 'date_de_creation'
+        ("Email_verifie", "email_verifie", "Toggle"),
+        ("Date_de_creation", "date_de_creation", "Date"),
     ]
 
-    # Map from your DF columns (left) to the attribute names expected by sync_table (right)
-    # DF has: email, prénom, nom, pseudo, email_vérifié, date_de_création
     df_to_attr = {
         "email": "email",
         "prenom": "prenom",
