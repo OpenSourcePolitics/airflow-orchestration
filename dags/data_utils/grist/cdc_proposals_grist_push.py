@@ -5,7 +5,7 @@ from ..postgres_helper.postgres_helper import get_postgres_connection
 from airflow.models import Variable
 
 # Retrieve the connection object using Airflow's BaseHook
-connection = BaseHook.get_connection("grist_osp")
+connection = BaseHook.get_connection("grist_cdc")
 grist_api_key = connection.password
 grist_server = connection.host
 grist_cdc_doc_id = Variable.get("grist_cdc_doc_id")
@@ -13,7 +13,7 @@ grist_cdc_doc_id = Variable.get("grist_cdc_doc_id")
 # Get api key from your Profile Settings, and run with GRIST_API_KEY=<key>
 api = GristDocAPI(grist_cdc_doc_id, server=grist_server, api_key=grist_api_key)
 
-table_name = "Propositions_brutes"
+table_name = "Propositions_Decidim"
 
 def retrieve_sql_data(engine):
     query = f"""
@@ -42,15 +42,15 @@ def dump_to_grist(rows_to_dump):
     new_data = rows_to_dump
     key_cols = [["proposal_id", "id", "Numeric"]]
     other_cols = [
-                    ("decidim_participatory_space_slug", "decidim_participatory_space_slug", "Text"),
-                    ("title", "title", "Text"),
-                    ("body", "body", "Text"),
+                    ("Consultation", "decidim_participatory_space_slug", "Text"),
+                    ("Titre_de_la_contribution", "title", "Text"),
+                    ("Corps_de_la_contribution", "body", "Text"),
                     ("url", "url", "Text"),
-                    ("translated_state", "translated_state", "Text"),
-                    ("category", "first_category", "Text"),
-                    ("comments_count", "comments_count", "Numeric"),
-                    ("endorsements_count", "endorsements_count", "Numeric"),
-                    ("imported_at", "imported_at", "DateTime")
+                    ("Etat", "translated_state", "Text"),
+                    ("Categorie", "first_category", "Text"),
+                    ("Nombre_de_commentaires", "comments_count", "Numeric"),
+                    ("Nombre_de_soutiens", "endorsements_count", "Numeric"),
+                    ("Date_d_update_de_la_ligne", "imported_at", "DateTime")
                 ]
     api.sync_table(table_name, new_data, key_cols, other_cols, grist_fetch=None, chunk_size=200, filters=None)    
 

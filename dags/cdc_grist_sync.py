@@ -2,7 +2,7 @@ import pendulum
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from data_utils.alerting.alerting import task_failed
-from data_utils.grist.grist_push import fetch_and_dump_cdc_data
+from data_utils.grist.cdc_proposals_grist_push import fetch_and_dump_cdc_data
 from clients import clients
 
 connection_name="main_db_cluster_name"
