@@ -9,3 +9,4 @@ apache-airflow-providers-github== 2.7.0
 pandas==2.2.3
 grist_api==0.1.1
 metabase-api==3.4.4
+python-keycloak==5.8.1
