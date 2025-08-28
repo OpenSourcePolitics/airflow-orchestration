@@ -41,3 +41,25 @@ git push origin dags-vX.X.X
 
 ```
    - Use a commit message like : [Prod] - Release dags-vX.X.X
+
+
+## Backfill Matomo DAGs
+
+This script allows you to replay all `matomo_dump_*` DAGs for each client defined in `clients.py`, over a given date range.
+
+### Command
+
+```bash
+docker compose exec airflow-webserver bash -lc '
+  export PYTHONPATH="/opt/airflow/dags:/opt/airflow:$PYTHONPATH"
+  START=2025-07-21 
+  END=2025-08-24   
+  for c in $(python - <<PY
+from clients import clients
+print(" ".join(clients.keys()))
+PY
+  ); do
+    echo "▶ Backfilling DAG matomo_dump_${c} from $START to $END"
+    airflow dags backfill "matomo_dump_${c}" -s "$START" -e "$END" --reset-dagruns
+  done
+'
