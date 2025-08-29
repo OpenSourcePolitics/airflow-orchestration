@@ -72,6 +72,16 @@ queries = {
 							WHERE participation_type = 'Decidim::Proposals::Proposal'
                             OR participation_type = 'Decidim::Comments::Comment'
                             GROUP BY decidim_user_id""",
+    "proposal_authoring_users" : """SELECT first_author_id, users.name, users.email, users.extended_data, COUNT(*) as proposals_count
+                            FROM prod.proposals
+                            JOIN prod.users ON first_author_id = users.id
+                            GROUP BY first_author_id, users.name, users.email, extended_data
+                            ORDER BY proposals_count DESC""",
+    "comment_authoring_users" : """SELECT decidim_author_id, users.name, users.email, users.extended_data, COUNT(*) as comments_count
+                            FROM prod.comments
+                            JOIN prod.users ON decidim_author_id = users.id
+                            GROUP BY decidim_author_id, users.name, users.email, extended_data
+                            ORDER BY comments_count DESC""",
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                     FROM prod.stg_decidim_participatory_processes""",
     "components": """SELECT id AS component_id, manifest_name, component_name, published_at, ps_title, ps_subtitle, ps_type
