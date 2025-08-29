@@ -66,6 +66,12 @@ queries = {
                             FROM prod.users
                             JOIN prod.participations ON users.id = participations.user_id
                             GROUP BY decidim_user_id""",
+    "authoring_users":      """SELECT id AS decidim_user_id, COUNT(participation_id) AS participations_count
+                            FROM prod.users
+                            JOIN prod.participations ON users.id = participations.user_id
+							WHERE participation_type = 'Decidim::Proposals::Proposal'
+                            OR participation_type = 'Decidim::Comments::Comment'
+                            GROUP BY decidim_user_id"""
     "processes": """SELECT id AS ps_id, title, subtitle, published_at
                     FROM prod.stg_decidim_participatory_processes""",
     "components": """SELECT id AS component_id, manifest_name, component_name, published_at, ps_title, ps_subtitle, ps_type
