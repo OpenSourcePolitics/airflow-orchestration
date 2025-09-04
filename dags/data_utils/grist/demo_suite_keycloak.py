@@ -5,6 +5,7 @@ import pandas as pd
 from types import SimpleNamespace
 from grist_api import GristDocAPI
 import requests
+import numpy as np
 
 # Retrieve the connection object using Airflow's BaseHook
 grist_connection = BaseHook.get_connection("grist_osp")
@@ -40,13 +41,18 @@ def init_keycloak_admin(
 
     return KeycloakAdmin(connection=keycloak_connection)
 
+def extract_structure(val):
+    if isinstance(val, dict) and "structure" in val and val["structure"]:
+        return val["structure"][0]
+    return np.nan
 
 def format_users_dataframe(users: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(users)
 
-    cols = ["username", "firstName", "lastName", "email", "emailVerified", "createdTimestamp"]
+    cols = ["username", "firstName", "lastName", "email", "emailVerified", "createdTimestamp", "attributes"]
     df = df[cols]
-    df.columns = ["pseudo", "prenom", "nom", "email", "email_verifie", "date_de_creation"]
+    df.columns = ["pseudo", "prenom", "nom", "email", "email_verifie", "date_de_creation", "attributes"]
+    df["structure"] = df["attributes"].apply(extract_structure)
 
     if "date_de_creation" in df.columns:
         df["date_de_creation"] = (
@@ -81,6 +87,7 @@ def dump_df_to_grist_table(
     other_cols = [
         ("Email_verifie", "email_verifie", "Toggle"),
         ("Date_de_creation", "date_de_creation", "Date"),
+        ("Structure", "structure", "Text"),
     ]
 
     df_to_attr = {
@@ -90,6 +97,7 @@ def dump_df_to_grist_table(
         "pseudo": "pseudo",
         "email_verifie": "email_verifie",
         "date_de_creation": "date_de_creation",
+        "structure": "structure",
     }
 
     # Build list of objects exposing those attributes
