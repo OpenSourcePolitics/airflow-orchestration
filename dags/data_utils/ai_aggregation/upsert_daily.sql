@@ -13,7 +13,7 @@ SELECT
   count(*)                           AS calls,
   coalesce(sum(mc.input_tokens),0)   AS sum_input_tokens,
   coalesce(sum(mc.output_tokens),0)  AS sum_output_tokens,
-  coalesce(sum(mc.cost_usd),0)       AS sum_cost,
+  coalesce(sum(mc.cost),0)       AS sum_cost,
   percentile_disc(0.95) WITHIN GROUP (ORDER BY mc.latency_ms) AS p95_latency_ms
 FROM params p
 JOIN public.model_calls mc
