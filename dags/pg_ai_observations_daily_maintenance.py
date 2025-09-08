@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 
 import pendulum
 from airflow import DAG
@@ -8,6 +9,9 @@ PARIS = pendulum.timezone("Europe/Paris")
 
 PG_CONN_ID = "ai_logs_pg"
 
+BASE_DIR = Path(__file__).resolve().parent
+SQL_PATH = BASE_DIR / "data_utils" / "ai_aggregation"
+
 with DAG(
     dag_id="pg_ai_observation_maintenance_daily",
     description="Create partitions, apply retention, upsert daily aggregates",
@@ -15,7 +19,7 @@ with DAG(
     schedule="10 2 * * *",
     catchup=False,
     tags=["postgres", "maintenance"],
-    template_searchpath=["/opt/airflow/dags/data_utils/ai_aggregation"],
+    template_searchpath=[str(SQL_PATH)],
 ) as dag:
 
     premake = SQLExecuteQueryOperator(
