@@ -65,6 +65,7 @@ class TestDumpDfToGristTable(unittest.TestCase):
                     "pseudo": "ali",
                     "email_verifie": True,
                     "date_de_creation": pd.Timestamp("2024-01-02"),
+                    "structure": "structure",
                 }
             ]
         )
@@ -83,7 +84,7 @@ class TestDumpDfToGristTable(unittest.TestCase):
         # Records list built from DataFrame rows (as attribute-bearing objects)
         records = args[1]
         self.assertEqual(len(records), len(self.df))
-        expected_attrs = {"email", "prenom", "nom", "pseudo", "email_verifie", "date_de_creation"}
+        expected_attrs = {"email", "prenom", "nom", "pseudo", "email_verifie", "date_de_creation", "structure"}
         for rec in records:
             self.assertTrue(all(hasattr(rec, attr) for attr in expected_attrs))
 
@@ -95,6 +96,7 @@ class TestDumpDfToGristTable(unittest.TestCase):
         self.assertEqual(r0.pseudo, "ali")
         self.assertEqual(r0.email_verifie, True)
         self.assertTrue(hasattr(r0, "date_de_creation"))
+        self.assertTrue(hasattr(r0, "structure"))
 
         # key_cols / other_cols as expected by py_grist_api.sync_table
         expected_key_cols = [
@@ -105,6 +107,7 @@ class TestDumpDfToGristTable(unittest.TestCase):
         expected_other_cols = [
             ("Email_verifie", "email_verifie", "Toggle"),
             ("Date_de_creation", "date_de_creation", "Date"),
+            ("Structure", "structure", "Text"),
         ]
         self.assertEqual(args[2], expected_key_cols)
         self.assertEqual(args[3], expected_other_cols)
