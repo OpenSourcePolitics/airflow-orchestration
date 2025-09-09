@@ -27,14 +27,14 @@ def fetch_invoices(models, db, uid, api_key):
         {'fields': [
             'id', 'name', 'move_type', 'partner_id', 'invoice_date',
             'invoice_date_due', 'create_date', 'line_ids',
-            'status_in_payment', 'x_studio_csv_gnr'
+            'status_in_payment', 'is_csv_generated'
         ]}
     )
 
     # Filter invoices to keep only those with specific conditions
     invoices_to_keep = [
         invoice for invoice in invoices
-        if invoice['status_in_payment'] not in ['draft', 'blocked', 'cancel'] and invoice['x_studio_csv_gnr'] == False
+        if invoice['status_in_payment'] not in ['draft', 'blocked', 'cancel'] and invoice['is_csv_generated'] == False
     ]
 
     return invoices_to_keep
@@ -116,9 +116,9 @@ def process_invoices(models, invoices_to_keep, db, uid, api_key):
 
 def mark_csv_as_generated_in_odoo(models, invoices_to_keep, db, uid, api_key):
     for invoice in invoices_to_keep:
-        # Update x_studio_csv_gnr to True for processed invoices
+        # Update is_csv_generated to True for processed invoices
         models.execute_kw(
-            db, uid, api_key, 'account.move', 'write', [[invoice['id']], {'x_studio_csv_gnr': True}]
+            db, uid, api_key, 'account.move', 'write', [[invoice['id']], {'is_csv_generated': True}]
         )
 
 
