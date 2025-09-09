@@ -144,14 +144,14 @@ def export_csv_and_send_webhook(df):
         print(f"CSV file '{filename}' has been successfully generated.")
 
         files = {'file': (filename, open(filename, 'rb'), 'text/csv')}
-        #try:
-        #    response = requests.post(webhook_url, files=files)
-        #    if response.status_code == 200:
-        #        print(f"The file '{filename}' has been successfully sent to the webhook.")
-        #    else:
-        #        print(f"Failed to send the file: {response.status_code} - {response.text}")
-        #except Exception as e:
-        #    print(f"An error occurred while sending the file: {e}")
+        try:
+            response = requests.post(webhook_url, files=files)
+            if response.status_code == 200:
+                print(f"The file '{filename}' has been successfully sent to the webhook.")
+            else:
+                print(f"Failed to send the file: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"An error occurred while sending the file: {e}")
 
 
 def odoo_invoices_automation_helper():
