@@ -17,7 +17,7 @@ with DAG(
     description="Create partitions, apply retention, upsert daily aggregates",
     start_date=pendulum.datetime(2025, 9, 1, tz=PARIS),
     schedule="10 2 * * *",
-    catchup=False,
+    catchup=True,
     tags=["postgres", "maintenance"],
     template_searchpath=[str(SQL_PATH)],
 ) as dag:

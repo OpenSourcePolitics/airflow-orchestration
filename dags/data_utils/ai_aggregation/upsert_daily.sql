@@ -1,5 +1,6 @@
+-- upsert_daily.sql
 WITH params AS (
-  SELECT (CURRENT_DATE - INTERVAL '1 day')::date AS d
+  SELECT CAST(%(target_day)s AS date) AS d
 )
 INSERT INTO public.daily_usage AS du
 (
@@ -21,7 +22,6 @@ SELECT
   percentile_disc(0.95) WITHIN GROUP (ORDER BY mc.latency_ms) AS p95_latency_ms,
   count(*) FILTER (WHERE upper(mc.metadata->>'output') = 'SPAM')      AS spam_calls,
   count(*) FILTER (WHERE upper(mc.metadata->>'output') = 'NOT_SPAM')  AS not_spam_calls
-
 FROM params p
 JOIN public.model_calls mc
   ON mc.ts >= p.d::timestamptz
