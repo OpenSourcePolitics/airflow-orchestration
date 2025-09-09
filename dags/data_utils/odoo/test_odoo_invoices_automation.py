@@ -29,7 +29,7 @@ class TestOdooInvoicesAutomation(unittest.TestCase):
                 'create_date': '2023-01-01',
                 'line_ids': [10, 11],
                 'status_in_payment': 'posted',
-                'x_studio_csv_gnr': False
+                'is_csv_generated': False
             },
             {
                 'id': 2,
@@ -41,7 +41,7 @@ class TestOdooInvoicesAutomation(unittest.TestCase):
                 'create_date': '2023-01-05',
                 'line_ids': [12],
                 'status_in_payment': 'draft',
-                'x_studio_csv_gnr': False
+                'is_csv_generated': False
             },
             {
                 'id': 3,
@@ -53,7 +53,7 @@ class TestOdooInvoicesAutomation(unittest.TestCase):
                 'create_date': '2023-01-10',
                 'line_ids': [13],
                 'status_in_payment': 'posted',
-                'x_studio_csv_gnr': True
+                'is_csv_generated': True
             },
         ]
 
