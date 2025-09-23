@@ -5,6 +5,7 @@ import pandas as pd
 class TestDataframeProcessing(unittest.TestCase):
 
     def setUp(self):
+        self.questionnaires_ids = [456, 559, 560, 614]
         self.df = pd.DataFrame({
             'session_token': ['1038918792771835475219703', '1038918792771835475219703', '77819727802057982331067', '77819727802057982331067'],
             'question_type': ['single_option', 'single_option', 'single_option', 'single_option'],

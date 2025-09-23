@@ -3,10 +3,6 @@ import json
 from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgres_connection
 from airflow.models import Variable
 
-questionnaires_ids_dict_str = Variable.get("questionnaires_ids")
-questionnaires_ids_dict = json.loads(questionnaires_ids_dict_str)
-
-
 def retrieve_form_answers(questionnaire_id, engine):
     query = f"""
                 SELECT 
@@ -68,7 +64,8 @@ def fetch_and_dump_answers_data(db_name, questionnaire_id):
     connection.close()
 
 def create_questionnaire_filters(database_name, client_name):
-
+    questionnaires_ids_dict_str = Variable.get("questionnaires_ids")
+    questionnaires_ids_dict = json.loads(questionnaires_ids_dict_str)
     questionnaires_ids = questionnaires_ids_dict.get(client_name, [])
     
     for questionnaire_id in questionnaires_ids:
