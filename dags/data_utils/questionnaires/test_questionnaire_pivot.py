@@ -1,6 +1,6 @@
-from unittest.mock import patch, MagicMock
 from dags.data_utils.questionnaires.questionnaire_pivot import pivot_filters, concat_multiple_answers, get_questionnaires_ids
 import unittest
+from unittest.mock import patch
 import pandas as pd
 
 class TestDataframeProcessing(unittest.TestCase):
@@ -24,12 +24,11 @@ class TestDataframeProcessing(unittest.TestCase):
             'position': ['1', '1']
         })
 
-    @patch('questionnaire_pivot.Variable.get')
+    @patch('dags.data_utils.questionnaires.questionnaire_pivot.Variable.get')
     def test_questionnaires_ids_parsing(self, mock_variable_get):
         """Test the proper parsing of the string variable stored in Airflow"""
         mock_variable_get.return_value = '{"paris": [98, 167, 2, 404], "marseille": [456,559,560,614], "lyon": [611,653]}'
-        with patch("builtins.open", MagicMock()):
-            questionnaires_ids = get_questionnaires_ids(self.client_name)
+        questionnaires_ids = get_questionnaires_ids(self.client_name)
 
         expected_result = [98, 167, 2, 404]
         self.assertEqual(expected_result, questionnaires_ids)
