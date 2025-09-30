@@ -70,8 +70,9 @@ def fetch_and_dump_answers_data(db_name, questionnaire_id):
     dump_data_to_postgres(connection, form_filters, table_name, schema='forms', if_exists='replace')
     connection.close()
 
-def create_questionnaire_filters(database_name, questionnaires_ids):
-    
+def create_questionnaire_filters(database_name, client_name):
+
+    questionnaires_ids = get_questionnaires_ids(client_name)
     for questionnaire_id in questionnaires_ids:
         fetch_and_dump_answers_data(database_name, questionnaire_id)
 

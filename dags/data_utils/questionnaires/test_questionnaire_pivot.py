@@ -33,6 +33,15 @@ class TestDataframeProcessing(unittest.TestCase):
         expected_result = [98, 167, 2, 404]
         self.assertEqual(expected_result, questionnaires_ids)
 
+    @patch('dags.data_utils.questionnaires.questionnaire_pivot.Variable.get')
+    def test_questionnaires_ids_parsing_when_failed(self, mock_variable_get):
+        """Test the proper parsing of the string variable stored in Airflow"""
+        mock_variable_get.return_value = '{"paris": [98, 167, 2, 404], "marseille": [456,559,560,614], "lyon": [611,653]}'
+        questionnaires_ids = get_questionnaires_ids("angers")
+
+        expected_result = []
+        self.assertEqual(expected_result, questionnaires_ids)
+
     def test_pivoting(self):
         """Test that the form_answers dataframe is correctly pivoted and aggregated."""
         form_filters = pivot_filters(self.df)
