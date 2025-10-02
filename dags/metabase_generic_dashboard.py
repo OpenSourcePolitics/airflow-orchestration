@@ -2,7 +2,7 @@ from airflow.models import Variable
 from airflow.decorators import dag
 from clients import clients
 from data_utils.metabase_automation.metabase_airflow_task import prepare_sub_collection, \
-    create_copy_dashboard_task, create_update_dashboard_task
+    create_copy_dashboard_task, create_update_dashboard_task, copy_alert_card_and_create_notification
 from data_utils.metabase_automation.metabase_automation import (
     get_generic_dashboard_names
 )
@@ -31,12 +31,20 @@ def create_metabase_generic_dashboard_dag(client_name):
         client_language = client_metadata["language"]
 
         sub_collection_name, name_global_dashboard, name_local_dashboard = get_generic_dashboard_names(client_language)
+        metabase_reference_collection_id = Variable.get(f"metabase_reference_collection_id")
         metabase_reference_global_dashboard_id = Variable.get(f"metabase_reference_global_dashboard_id_{client_language}")
         metabase_reference_local_dashboard_id = Variable.get(f"metabase_reference_local_dashboard_id_{client_language}")
 
         sub_collection_id = prepare_sub_collection(
             collection_name=clients_collection_name,
             sub_collection_name=sub_collection_name
+        )
+
+        create_global_bounce_alert = copy_alert_card_and_create_notification(
+            reference_collection_id=metabase_reference_collection_id,
+            card_name="Alerting - Évolution du nombre de visites Matomo",
+            target_db_id=client_database_id,
+            dashboard_task_id="copy_tableau_de_bord_global_",
         )
 
         copy_global_dashboard = create_copy_dashboard_task(metabase_reference_global_dashboard_id,
@@ -49,6 +57,8 @@ def create_metabase_generic_dashboard_dag(client_name):
         sub_collection_id >> [copy_global_dashboard, copy_local_dashboard]
         copy_global_dashboard >> update_global_dashboard_database
         copy_local_dashboard >> update_local_dashboard_database
+
+        update_global_dashboard_database >> create_global_bounce_alert
 
     return create_and_update_generic_dashboard()
 

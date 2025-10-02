@@ -3,12 +3,17 @@ from .metabase_automation import (
     dashboard_copy,
     get_new_dashboard_id,
     replace_dashboard_source_db,
-    get_collection_id_by_name,
     create_sub_collection_if_not_exist,
     clean_sub_collection,
     get_sub_collection_id_by_name,
+    get_collection_id_by_name,
+    get_card_by_name_in_collection,
+    copy_card_to_collection,
+    replace_card_source_db,
+    create_notification_alert_for_card_from_emails,
 )
 
+from airflow.models import Variable
 import logging
 import re
 
@@ -75,3 +80,43 @@ def create_update_dashboard_task(dashboard_name, database_id):
         replace_dashboard_source_db(new_dashboard_id, database_id, 'prod')
 
     return update_dashboard
+
+
+
+@task(task_id="copy_alert_card_and_create_notification", provide_context=True)
+def copy_alert_card_and_create_notification(
+    reference_collection_id: int,           # <-- collection id where the reference card lives
+    card_name: str,
+    target_db_id: int,
+    schema_name: str = "prod",
+    cron_expr: str = "0 0 9 ? * MON",
+    send_once: bool = True,
+    **kwargs
+):
+    """
+    Copy the reference SQL card into the prepared sub-collection, switch DB, then create a notification on it.
+    """
+    recipients = Variable.get("metabase_alert_recipients", deserialize_json=True)
+
+    ti = kwargs["ti"]
+    target_collection_id = ti.xcom_pull(task_ids="prepare_sub_collection")
+
+    # 1) Locate the reference card by name in the reference collection
+    ref_card = get_card_by_name_in_collection(reference_collection_id, card_name)
+    if not ref_card:
+        raise RuntimeError(f"Reference card '{card_name}' not found in collection id {reference_collection_id}")
+
+    # 2) Copy into the client's sub-collection (enforced into target collection)
+    new_card_id = copy_card_to_collection(ref_card["id"], target_collection_id, new_name=card_name)
+
+    # 3) Switch DB/schema
+    replace_card_source_db(new_card_id, target_db_id, schema_name=schema_name)
+
+    # 4) Create notification using user IDs resolved from emails
+    notif_id = create_notification_alert_for_card_from_emails(
+        card_id=new_card_id,
+        recipient_emails=recipients,
+        cron_expr=cron_expr,
+        send_once=send_once
+    )
+    return notif_id
