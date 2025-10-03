@@ -9,4 +9,5 @@ RUN pip install apache-airflow-providers-airbyte[http] \
 && pip install apache-airflow-providers-github \
 && pip install grist_api \
 && pip install metabase-api \
-&& pip install python-keycloak==5.8.1
+&& pip install python-keycloak==5.8.1 \
+&& pip install kubernetes==34.1.0
