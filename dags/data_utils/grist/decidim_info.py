@@ -219,6 +219,24 @@ def version_from_status_or_image(obj: dict) -> str:
         return image.split(":")[-1]
     return ""
 
+def parse_image_repo_name(image_str: str) -> str:
+    """
+    Return the repository name (last path segment before the optional ':tag').
+
+    Examples
+    --------
+    rg.fr-par.scw.cloud/decidim-imt/decidim-imt:feat-sso-saml -> 'decidim-imt'
+    ghcr.io/org/app:1.2.3                                     -> 'app'
+    busybox                                                    -> 'busybox'
+    """
+    if not image_str:
+        return ""
+    # Strip tag if present
+    path = image_str.split(":", 1)[0]
+    # Keep last segment after slash, else the whole thing
+    return path.rsplit("/", 1)[-1] if "/" in path else path
+
+
 
 def build_dataframe_from_decidim_dicts(items: List[dict]) -> pd.DataFrame:
     """
@@ -254,6 +272,9 @@ def build_dataframe_from_decidim_dicts(items: List[dict]) -> pd.DataFrame:
 
         ver = version_from_status_or_image(obj)
 
+        full_image = spec.get("image", "")
+        image_repo = parse_image_repo_name(full_image)
+
         rows.append(
             {
                 "Namespace": ns,
@@ -263,6 +284,7 @@ def build_dataframe_from_decidim_dicts(items: List[dict]) -> pd.DataFrame:
                 "Status": ready_msg,
                 "Version": ver,
                 "LastTransitionTime": last_transition,
+                "Image": image_repo,
             }
         )
 
@@ -270,6 +292,7 @@ def build_dataframe_from_decidim_dicts(items: List[dict]) -> pd.DataFrame:
     if not df.empty:
         df = df.sort_values(["Namespace", "Name"], kind="stable").reset_index(drop=True)
     return df
+
 
 
 # -------------------------
@@ -297,7 +320,7 @@ def dump_df_to_grist_table(
         return
 
     # Ensure required columns exist (robustness)
-    for col in ["Namespace", "Name", "Host", "Ready", "Version"]:
+    for col in ["Namespace", "Name", "Host", "Ready", "Version", "Image"]:
         if col not in df.columns:
             df[col] = ""
 
@@ -329,6 +352,7 @@ def dump_df_to_grist_table(
         ("Host", "host", "Text"),
         ("Ready", "ready", "Text"),
         ("Version", "version", "Text"),
+        ("Image", "image", "Text"),
         ("Last_Update", "last_update", "Date"),
     ]
 
@@ -338,6 +362,7 @@ def dump_df_to_grist_table(
         "host": "Host",
         "ready": "Ready",
         "version": "Version",
+        "image": "Image",
         "last_update": "Last_Update",
     }
 
@@ -357,6 +382,7 @@ def dump_df_to_grist_table(
         chunk_size=chunk_size,
         filters=None,
     )
+
 
 
 def fetch_existing_grist_platforms(api: GristDocAPI, table_name: str) -> pd.DataFrame:

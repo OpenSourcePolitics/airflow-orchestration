@@ -7,6 +7,7 @@ from unittest.mock import patch
 from decidim_info import (
     find_version_changes,
     send_version_changes_to_n8n,
+    parse_image_repo_name,
 )
 
 
@@ -67,7 +68,7 @@ def _decidim_obj(
     message="ok",
     ltt="2025-09-30T10:20:30Z",
     status_version="v1.2.3",
-    image=None,
+    image="decidim-app",
 ):
     cond = {
         "type": "Ready",
@@ -86,16 +87,18 @@ def _decidim_obj(
         obj["status"]["version"] = status_version
     if image is not None:
         obj["spec"]["image"] = image
-        # Optionally remove status.version so image fallback is used
+
+    # If no status.version provided, we want fallback via image tag
+    if status_version is None:
         obj["status"].pop("version", None)
     return obj
 
 
 def test_build_dataframe_happy_path():
     items = [
-        _decidim_obj(ns="a", name="x", host="x.example", ready_status="True", message="ok", ltt="t1", status_version="v1"),
-        _decidim_obj(ns="a", name="y", host="y.example", ready_status="False", message="fail", ltt="t2", status_version="v2"),
-        _decidim_obj(ns="b", name="z", host="z.example", ready_status="True", message="ok", ltt="t3", status_version=None, image="repo/app:2025-09-01"),
+        _decidim_obj(ns="a", name="x", host="x.example", ready_status="True",  message="ok",   ltt="t1", status_version="v1", image="decidim-app"),
+        _decidim_obj(ns="a", name="y", host="y.example", ready_status="False", message="fail", ltt="t2", status_version="v2", image="decidim-app"),
+        _decidim_obj(ns="b", name="z", host="z.example", ready_status="True",  message="ok",   ltt="t3", status_version=None, image="app"),
     ]
     df = build_dataframe_from_decidim_dicts(items)
 
@@ -107,6 +110,7 @@ def test_build_dataframe_happy_path():
         "Status",
         "Version",
         "LastTransitionTime",
+        "Image",
     ]
 
     # Sorted by (Namespace, Name): (a,x), (a,y), (b,z)
@@ -114,11 +118,16 @@ def test_build_dataframe_happy_path():
     assert df.iloc[1]["Namespace"] == "a" and df.iloc[1]["Name"] == "y"
     assert df.iloc[2]["Namespace"] == "b" and df.iloc[2]["Name"] == "z"
 
-    # Readiness and version extraction
-    assert df.iloc[0]["Ready"] == "True" and df.iloc[0]["Version"] == "v1"
+    # Readiness and version extraction (status.version preferred)
+    assert df.iloc[0]["Ready"] == "True"  and df.iloc[0]["Version"] == "v1"
     assert df.iloc[1]["Ready"] == "False" and df.iloc[1]["Version"] == "v2"
     # Image fallback
-    assert df.iloc[2]["Version"] == "2025-09-01"
+    assert df.iloc[2]["Version"] == ""
+
+    assert df.iloc[0]["Image"] == "decidim-app"
+    assert df.iloc[1]["Image"] == "decidim-app"
+    assert df.iloc[2]["Image"] == "app"
+
 
 
 def test_build_dataframe_missing_fields_and_no_conditions():
@@ -192,3 +201,23 @@ def test_send_version_changes_to_n8n(posts):
     assert body2["namespace"] == "b" and body2["name"] == "z"
     assert body2["old_version"] == "" and body2["new_version"] == "v0"
     assert body2["change_type"] == "new"
+
+
+def test_parse_image_repo_name():
+    """
+    Ensure parse_image_repo_name extracts the last repository segment correctly,
+    handling various registry, path, and tag formats.
+    """
+    cases = {
+        "rg.fr-par.scw.cloud/decidim-imt/decidim-imt:feat-sso-saml": "decidim-imt",
+        "ghcr.io/org/app:1.2.3": "app",
+        "busybox": "busybox",
+        "registry.io/foo/bar/baz:latest": "baz",
+        "registry.io/foo/bar": "bar",
+        "": "",
+        None: "",
+    }
+
+    for input_str, expected in cases.items():
+        result = parse_image_repo_name(input_str)
+        assert result == expected, f"Expected '{expected}' for '{input_str}', got '{result}'"
