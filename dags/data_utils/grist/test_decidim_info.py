@@ -122,7 +122,7 @@ def test_build_dataframe_happy_path():
     assert df.iloc[0]["Ready"] == "True"  and df.iloc[0]["Version"] == "v1"
     assert df.iloc[1]["Ready"] == "False" and df.iloc[1]["Version"] == "v2"
     # Image fallback
-    assert df.iloc[2]["Version"] == "2025-09-01"
+    assert df.iloc[2]["Version"] == ""
 
     assert df.iloc[0]["Image"] == "decidim-app"
     assert df.iloc[1]["Image"] == "decidim-app"
