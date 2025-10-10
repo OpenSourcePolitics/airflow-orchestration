@@ -3,6 +3,7 @@ from grist_api import GristDocAPI
 import pandas as pd
 from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgres_connection, drop_table_in_postgres
 from airflow.models import Variable
+from .grist_utils import fetch_grist_table_data
 
 # Retrieve the connection object using Airflow's BaseHook
 connection = BaseHook.get_connection("grist_osp")
@@ -10,15 +11,12 @@ grist_api_key = connection.password
 grist_server = connection.host
 grist_ca_doc_id = Variable.get("grist_ca_doc_id")
 
-# Get api key from your Profile Settings, and run with GRIST_API_KEY=<key>
-api = GristDocAPI(grist_ca_doc_id, server=grist_server, api_key=grist_api_key)
-
 
 def fetch_and_dump_data(connection_name):
-    data = api.fetch_table('Suivi_CA_par_clients')
-    df = pd.DataFrame(data)
+    # Fetch data from Grist using the new utility function
+    df = fetch_grist_table_data(grist_ca_doc_id, "Suivi_CA_par_clients")
 
-    df['Prestations_2024'] = df['Prestations_2024'].astype(str)
+    df["Prestations_2024"] = df["Prestations_2024"].astype(str)
 
     # Add boolean columns for each field
     fields = ['Abo Decidim', 'Abo Grist', 'Abo Metabase', 'Bénévolat',
@@ -33,7 +31,6 @@ def fetch_and_dump_data(connection_name):
     connection = engine.connect()
     table_name = "grist_test_ca"
 
-    drop_table_in_postgres(connection, table_name)
-    dump_data_to_postgres(connection, df, table_name)
+    dump_data_to_postgres(connection, df, table_name, if_exists="replace")
 
     connection.close()
