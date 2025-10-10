@@ -7,6 +7,7 @@ from unittest.mock import patch
 from decidim_info import (
     find_version_changes,
     send_version_changes_to_n8n,
+    parse_image_repo_name,
 )
 
 
@@ -192,3 +193,23 @@ def test_send_version_changes_to_n8n(posts):
     assert body2["namespace"] == "b" and body2["name"] == "z"
     assert body2["old_version"] == "" and body2["new_version"] == "v0"
     assert body2["change_type"] == "new"
+
+
+def test_parse_image_repo_name():
+    """
+    Ensure parse_image_repo_name extracts the last repository segment correctly,
+    handling various registry, path, and tag formats.
+    """
+    cases = {
+        "rg.fr-par.scw.cloud/decidim-imt/decidim-imt:feat-sso-saml": "decidim-imt",
+        "ghcr.io/org/app:1.2.3": "app",
+        "busybox": "busybox",
+        "registry.io/foo/bar/baz:latest": "baz",
+        "registry.io/foo/bar": "bar",
+        "": "",
+        None: "",
+    }
+
+    for input_str, expected in cases.items():
+        result = parse_image_repo_name(input_str)
+        assert result == expected, f"Expected '{expected}' for '{input_str}', got '{result}'"
