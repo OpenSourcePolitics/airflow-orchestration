@@ -239,6 +239,22 @@ def parse_image_repo_name(image_str: str) -> str:
 
 
 def build_dataframe_from_decidim_dicts(items: List[dict]) -> pd.DataFrame:
+    """
+    Build a normalized DataFrame from a list of Decidim dicts.
+
+    The resulting DataFrame has columns:
+    ['Namespace', 'Name', 'Host', 'Ready', 'Status', 'Version', 'LastTransitionTime']
+
+    Parameters
+    ----------
+    items : list of dict
+        Decidim resources converted to dicts.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Normalized table sorted by (Namespace, Name).
+    """
     rows = []
     for obj in items:
         meta = obj.get("metadata") or {}
@@ -289,6 +305,16 @@ def dump_df_to_grist_table(
     date_provider: callable = lambda: datetime.now().date(),
     chunk_size: int = 200,
 ):
+    """
+    Push a Decidim DataFrame into a Grist table via sync_table.
+
+    The table `table_name` is expected to have:
+      - Key columns: ['Namespace' (Text), 'Name' (Text)]
+      - Other columns: 'Host' (Text), 'Ready' (Text), 'Version' (Text), 'Last_Update' (Date)
+
+    Last_Update is derived from the row's Ready condition 'lastTransitionTime' (UTC date).
+    If missing or unparsable, it falls back to today's date (via date_provider()).
+    """
     if df.empty:
         logging.info("No rows to push to Grist (empty DataFrame).")
         return
@@ -300,12 +326,14 @@ def dump_df_to_grist_table(
 
     df = df.copy()
 
+    # --- Parse per-row LastTransitionTime -> date (UTC) ---
     def _parse_ltt_to_date(val):
         if val is None or val == "":
             return None
         ts = pd.to_datetime(val, utc=True, errors="coerce")
         if pd.isna(ts):
             return None
+        # Keep date part in UTC (matches kubectl/json semantics)
         return ts.date()
 
     if "LastTransitionTime" in df.columns:
