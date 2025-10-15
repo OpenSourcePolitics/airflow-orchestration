@@ -14,6 +14,7 @@ from airflow.hooks.base import BaseHook
 from kubernetes import client as k8s_client
 from kubernetes import config as k8s_config
 from kubernetes.dynamic import DynamicClient
+from typing import Callable
 
 import requests
 
@@ -302,7 +303,7 @@ def dump_df_to_grist_table(
     api: GristDocAPI,
     table_name: str,
     df: pd.DataFrame,
-    date_provider: callable = lambda: datetime.now().date(),
+    date_provider: Callable = lambda: datetime.now().date(),
     chunk_size: int = 200,
 ):
     """
@@ -408,7 +409,7 @@ def fetch_existing_grist_platforms(api: GristDocAPI, table_name: str) -> pd.Data
     if "Host" not in df.columns:
         df["Host"] = ""
 
-    return df[["Namespace", "Name", "Version", "Host"]]
+    return df[["Namespace", "Name", "Version", "Host"]] # type: ignore
 
 
 def find_version_changes(df_new: pd.DataFrame, df_old: pd.DataFrame, notify_on_new: bool = True) -> pd.DataFrame:

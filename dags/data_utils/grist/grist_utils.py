@@ -1,7 +1,7 @@
 from airflow.hooks.base import BaseHook
 from grist_api import GristDocAPI
 import pandas as pd
-from airflow.models import Variable
+from typing import Literal
 
 # Retrieve the connection object using Airflow's BaseHook
 connection = BaseHook.get_connection("grist_osp")
@@ -9,7 +9,7 @@ grist_api_key = connection.password
 grist_server = connection.host
 
 
-def fetch_grist_table_data(doc_id, table_name, errors="coerce"):
+def fetch_grist_table_data(doc_id, table_name, errors=Literal["ignore", "raise", "coerce"]):
     """
     Fetch data from a Grist table and return it as a pandas DataFrame with type validation.
 

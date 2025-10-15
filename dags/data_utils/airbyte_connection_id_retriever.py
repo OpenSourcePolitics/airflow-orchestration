@@ -1,6 +1,5 @@
 import requests
 from airflow.hooks.base import BaseHook
-from airflow.models import Variable
 
 # Function to dynamically retrieve the token via the Airbyte API. Token are short-lived, 3 minutes.
 def get_airbyte_token():

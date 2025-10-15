@@ -135,8 +135,8 @@ with DAG(
     )
 
     logger = logging.getLogger(__name__)
-    logger.warn(":DEBUG: crossclient_aggregation - This is a log message")
-    logger.warn(f":DEBUG: crossclient_aggregation> Queries : {queries}")
-    logger.warn(f":DEBUG: crossclient_aggregation> Clients : {clients}")
+    logger.warning(":DEBUG: crossclient_aggregation - This is a log message")
+    logger.warning(f":DEBUG: crossclient_aggregation> Queries : {queries}")
+    logger.warning(f":DEBUG: crossclient_aggregation> Clients : {clients}")
     aggregate_crossclient_data
-    logger.warn(f":DEBUG: crossclient_aggregation> DAG terminated.")
+    logger.warning(":DEBUG: crossclient_aggregation> DAG terminated.")

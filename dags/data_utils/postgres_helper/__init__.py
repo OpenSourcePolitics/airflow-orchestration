@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, text
 from airflow.hooks.base import BaseHook
-
+import pandas as pd
+from typing import Literal
 
 def get_postgres_connection(connection_name, database):
     """Extracts PostgreSQL connection details from Airflow and establishes a connection."""
@@ -41,7 +42,7 @@ def drop_table_in_postgres(connection, table_name):
 
 # Dump DataFrame to PostgreSQL table
 def dump_data_to_postgres(
-    connection, data, table_name, schema="public", if_exists="append"
+    connection, data: pd.DataFrame, table_name, schema="public", if_exists: Literal["fail", "replace", "append"]="append"
 ):
     """Dumps the DataFrame into the specified PostgreSQL table."""
     try:

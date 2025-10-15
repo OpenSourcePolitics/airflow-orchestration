@@ -34,7 +34,7 @@ def fetch_invoices(models, db, uid, api_key):
     # Filter invoices to keep only those with specific conditions
     invoices_to_keep = [
         invoice for invoice in invoices
-        if invoice['status_in_payment'] not in ['draft', 'blocked', 'cancel'] and invoice['is_csv_generated'] == False
+        if invoice['status_in_payment'] not in ['draft', 'blocked', 'cancel'] and not invoice['is_csv_generated']
     ]
 
     return invoices_to_keep
