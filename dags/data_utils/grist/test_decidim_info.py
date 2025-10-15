@@ -4,12 +4,11 @@ from types import SimpleNamespace
 import pandas as pd
 from unittest.mock import patch
 
-from decidim_info import (
+from .decidim_info import (
     find_version_changes,
     send_version_changes_to_n8n,
     parse_image_repo_name,
 )
-
 
 import pytest
 
@@ -153,7 +152,7 @@ def test_find_version_changes_updates_and_new():
     assert z["New_Version"] == "v0"
 
 
-@patch("decidim_info.requests.post")
+@patch("data_utils.grist.decidim_info.requests.post")
 def test_send_version_changes_to_n8n(posts):
     df = pd.DataFrame(
         [
