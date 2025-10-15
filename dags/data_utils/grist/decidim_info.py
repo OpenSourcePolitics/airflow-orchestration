@@ -1,25 +1,19 @@
 from __future__ import annotations
 
+import json
 import logging
-import os
-import tempfile
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, List, Optional
-import base64
-import json
-import yaml
-import re
+
 import pandas as pd
+import requests
 from airflow.hooks.base import BaseHook
+from grist_api import GristDocAPI
 from kubernetes import client as k8s_client
 from kubernetes import config as k8s_config
 from kubernetes.dynamic import DynamicClient
 
-import requests
-
-from grist_api import GristDocAPI
-
-from dataclasses import dataclass
 
 @dataclass
 class K8sDecidimConfig:
@@ -28,9 +22,6 @@ class K8sDecidimConfig:
 
     Parameters
     ----------
-    kube_conn_id : str
-        Airflow connection id from which to read the kubeconfig.
-        The kubeconfig YAML must be stored in `connection.password`.
     grist_conn_id : str
         Airflow connection id for Grist.
     grist_doc_var : str
@@ -43,7 +34,6 @@ class K8sDecidimConfig:
         Kubernetes Kind of the Decidim CRD.
     """
 
-    kube_conn_id: str
     grist_conn_id: str
     grist_doc_var: str
     grist_table_var: str
@@ -54,81 +44,6 @@ class K8sDecidimConfig:
 # -------------------------
 # Kubernetes helpers
 # -------------------------
-def load_kube_api_client_from_connection(conn_id: str):
-    """
-    Load a Kubernetes ApiClient using a kubeconfig stored as base64 in an Airflow connection.
-
-    Accepted locations:
-      - connection.password: "BASE64:<one-line-base64>" OR just "<one-line-base64>"
-      - connection.extra (JSON): {"kubeconfig_b64": "<one-line-base64>"}
-    """
-
-    conn = BaseHook.get_connection(conn_id)
-
-    # 1) Prefer password
-    raw = (conn.password or "").strip()
-
-    if not raw:
-        raise RuntimeError(
-            f"Connection '{conn_id}' does not contain base64 kubeconfig. "
-            "Put a one-line base64 in password (optionally with 'BASE64:' prefix) "
-            "or in extras.kubeconfig_b64."
-        )
-
-    # Strip quotes if the UI saved them
-    if (raw.startswith('"') and raw.endswith('"')) or (raw.startswith("'") and raw.endswith("'")):
-        raw = raw[1:-1]
-
-    # Remove optional prefix
-    if raw.startswith("BASE64:"):
-        raw = raw[len("BASE64:"):]
-
-    # Remove *all* whitespace just in case UI wrapped it
-    raw = re.sub(r"\s+", "", raw)
-
-    # Add padding if missing
-    missing = (-len(raw)) % 4
-    if missing:
-        raw += "=" * missing
-
-    def _try_decode(b64s: str) -> str:
-        # Try standard base64 then url-safe
-        try:
-            return base64.b64decode(b64s, validate=False).decode("utf-8")
-        except Exception:
-            # try urlsafe variant
-            try:
-                return base64.urlsafe_b64decode(b64s).decode("utf-8")
-            except Exception as e:
-                raise RuntimeError("Provided kubeconfig is not valid base64 (even after padding).") from e
-
-    decoded_yaml = _try_decode(raw)
-
-    # Validate YAML (don’t log content)
-    try:
-        parsed = yaml.safe_load(decoded_yaml)
-        if not isinstance(parsed, dict) or "apiVersion" not in parsed or "kind" not in parsed:
-            raise RuntimeError("Decoded kubeconfig YAML missing required keys.")
-    except Exception as e:
-        raise RuntimeError("Decoded kubeconfig is not valid YAML.") from e
-
-    # Write file for k8s client
-    tmp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-    try:
-        tmp_file.write(decoded_yaml)
-        tmp_file.flush()
-        tmp_file.close()
-        k8s_config.load_kube_config(config_file=tmp_file.name)
-        api_client = k8s_client.ApiClient()
-        return api_client, tmp_file.name
-    except Exception:
-        try:
-            os.unlink(tmp_file.name)
-        except Exception:
-            pass
-        raise
-
-
 
 def discover_decidim_resource(dynamic: DynamicClient, api_version: str, kind: str):
     """
@@ -519,52 +434,46 @@ def collect_and_push_to_grist(cfg: K8sDecidimConfig):
     """
     from airflow.models import Variable
 
-    # Load K8s
-    api_client, tmp_path = load_kube_api_client_from_connection(cfg.kube_conn_id)
+    k8s_config.load_incluster_config()
+    api_client = k8s_client.ApiClient()
+    dyn = DynamicClient(api_client)
+    res = discover_decidim_resource(dyn, cfg.api_version, cfg.kind)
+    items = list_decidim_items_as_dicts(res)
+    df_new = build_dataframe_from_decidim_dicts(items)
+
+    # Build Grist client
+    grist_conn = BaseHook.get_connection(cfg.grist_conn_id)
+    grist_api_key = grist_conn.password
+    grist_server = grist_conn.host
+
+    doc_id = Variable.get(cfg.grist_doc_var)
+    table_name = Variable.get(cfg.grist_table_var)
+
+    api = GristDocAPI(doc_id, server=grist_server, api_key=grist_api_key)
+
     try:
-        dyn = DynamicClient(api_client)
-        res = discover_decidim_resource(dyn, cfg.api_version, cfg.kind)
-        items = list_decidim_items_as_dicts(res)
-        df_new = build_dataframe_from_decidim_dicts(items)
+        df_existing = fetch_existing_grist_platforms(api, table_name)
+    except Exception as e:
+        logging.warning("Failed to fetch existing Grist table; assuming empty. Err=%s", e)
+        df_existing = pd.DataFrame(columns=["Namespace", "Name", "Version", "Host"])
 
-        # Build Grist client
-        grist_conn = BaseHook.get_connection(cfg.grist_conn_id)
-        grist_api_key = grist_conn.password
-        grist_server = grist_conn.host
+    changes = find_version_changes(df_new, df_existing, notify_on_new=True)
+    logging.info("Detected %d version change(s).", len(changes))
 
-        doc_id = Variable.get(cfg.grist_doc_var)
-        table_name = Variable.get(cfg.grist_table_var)
+    webhook_url = Variable.get("n8n_webhook_decidim_version_change", default_var="")
+    if webhook_url and not changes.empty:
+        send_version_changes_to_n8n(webhook_url, changes)
+        logging.info("Sent %d notification(s) to n8n.", len(changes))
+    elif not webhook_url and not changes.empty:
+        logging.warning("n8n_webhook_decidim_version_change not set; skipping notifications.")
 
-        api = GristDocAPI(doc_id, server=grist_server, api_key=grist_api_key)
+    # --- Push updated snapshot to Grist (so next run compares against it) ---
+    dump_df_to_grist_table(api, table_name, df_new)
 
-        try:
-            df_existing = fetch_existing_grist_platforms(api, table_name)
-        except Exception as e:
-            logging.warning("Failed to fetch existing Grist table; assuming empty. Err=%s", e)
-            df_existing = pd.DataFrame(columns=["Namespace", "Name", "Version", "Host"])
+    logging.info("Pushed %d Decidim rows to Grist table '%s'.", len(df_new), table_name)
+    if not df_new.empty:
+        logging.debug("Sample rows: %s", json.dumps(df_new.head(5).to_dict(orient="records"), ensure_ascii=False))
 
-        changes = find_version_changes(df_new, df_existing, notify_on_new=True)
-        logging.info("Detected %d version change(s).", len(changes))
+    return df_new
 
-        webhook_url = Variable.get("n8n_webhook_decidim_version_change", default_var="")
-        if webhook_url and not changes.empty:
-            send_version_changes_to_n8n(webhook_url, changes)
-            logging.info("Sent %d notification(s) to n8n.", len(changes))
-        elif not webhook_url and not changes.empty:
-            logging.warning("n8n_webhook_decidim_version_change not set; skipping notifications.")
-
-        # --- Push updated snapshot to Grist (so next run compares against it) ---
-        dump_df_to_grist_table(api, table_name, df_new)
-
-        logging.info("Pushed %d Decidim rows to Grist table '%s'.", len(df_new), table_name)
-        if not df_new.empty:
-            logging.debug("Sample rows: %s", json.dumps(df_new.head(5).to_dict(orient="records"), ensure_ascii=False))
-
-        return df_new
-    finally:
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.unlink(tmp_path)
-            except Exception:
-                logging.warning("Failed to delete temporary kubeconfig file: %s", tmp_path)
 
