@@ -1,4 +1,4 @@
-from .postgres_helper import get_postgres_connection
+from . import get_postgres_connection
 from sqlalchemy import text
 import time
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT

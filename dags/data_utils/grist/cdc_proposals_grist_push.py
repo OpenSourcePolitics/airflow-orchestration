@@ -1,7 +1,7 @@
 from airflow.hooks.base import BaseHook
 from grist_api import GristDocAPI
 from sqlalchemy import text
-from ..postgres_helper.postgres_helper import get_postgres_connection
+from ..postgres_helper import get_postgres_connection
 from airflow.models import Variable
 
 # Retrieve the connection object using Airflow's BaseHook
