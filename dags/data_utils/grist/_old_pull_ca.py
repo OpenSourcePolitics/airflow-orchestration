@@ -1,10 +1,7 @@
 from airflow.hooks.base import BaseHook
-from grist_api import GristDocAPI
-import pandas as pd
 from ..postgres_helper import (
     dump_data_to_postgres,
     get_postgres_connection,
-    drop_table_in_postgres,
 )
 from airflow.models import Variable
 from .grist_utils import fetch_grist_table_data
