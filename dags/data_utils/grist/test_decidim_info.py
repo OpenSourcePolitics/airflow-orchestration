@@ -13,7 +13,7 @@ from decidim_info import (
 
 import pytest
 
-from decidim_info import load_kube_api_client_from_connection, build_dataframe_from_decidim_dicts
+from decidim_info import build_dataframe_from_decidim_dicts
 
 @pytest.fixture
 def sample_kubeconfig_yaml():
@@ -30,33 +30,6 @@ def sample_kubeconfig_yaml():
 def _make_conn(password="", extra=""):
     # Simple stub matching the attributes used by BaseHook.get_connection
     return SimpleNamespace(password=password, extra=extra)
-
-
-@patch("decidim_info.k8s_client.ApiClient")
-@patch("decidim_info.k8s_config.load_kube_config")
-@patch("airflow.hooks.base.BaseHook.get_connection")
-def test_loader_accepts_password_prefix_base64(get_conn, load_cfg, api_client_cls, sample_kubeconfig_yaml, tmp_path):
-    """
-    Should decode when password is 'BASE64:<b64>' and feed a temp file to load_kube_config.
-    """
-    b64 = base64.b64encode(sample_kubeconfig_yaml.encode("utf-8")).decode("ascii")
-    get_conn.return_value = _make_conn(password=f"BASE64:{b64}", extra="")
-
-    api_client_cls.return_value = "API_CLIENT_SENTINEL"
-
-    api, path = load_kube_api_client_from_connection("k8s_config")
-
-    load_cfg.assert_called_once()
-    assert os.path.exists(path)
-    assert api == "API_CLIENT_SENTINEL"
-
-    # Sanity: file contains our YAML
-    with open(path, "r", encoding="utf-8") as f:
-        content = f.read()
-    assert content == sample_kubeconfig_yaml
-
-    # Cleanup
-    os.unlink(path)
 
 ### DECIDIM TRANSFORMATION
 

@@ -26,7 +26,6 @@ with DAG(
     @task
     def run_collection_and_push():
         cfg = K8sDecidimConfig(
-            kube_conn_id="k8s_config",
             grist_conn_id="grist_osp",
             grist_doc_var="grist_decidim_document_id",
             grist_table_var="grist_osp_plateformes_decidim",
