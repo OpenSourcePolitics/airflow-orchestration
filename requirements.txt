@@ -7,7 +7,9 @@ apache-airflow==2.10.1
 apache-airflow-providers-airbyte==4.0.0
 apache-airflow-providers-github== 2.7.0
 pandas==2.2.3
+pandas-stubs==2.2.3.250527
 grist_api==0.1.1
 metabase-api==3.4.4
 python-keycloak==5.8.1
 kubernetes==34.1.0
+psycopg2-binary==2.9.11
