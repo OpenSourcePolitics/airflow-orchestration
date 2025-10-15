@@ -16,7 +16,7 @@ api = GristDocAPI(grist_cdc_doc_id, server=grist_server, api_key=grist_api_key)
 table_name = "Propositions_Decidim"
 
 def retrieve_sql_data(engine):
-    query = f"""
+    query = """
                 SELECT
                     id,
                     decidim_participatory_space_slug,

@@ -27,6 +27,6 @@ def process_dataframe_for_campaign(df):
             df['campaign_medium'] = source_medium_split[1]  # Assign the second part as campaign_medium
             # Drop the original combined column as it's no longer needed
             df = df.drop(columns=['MarketingCampaignsReporting_CampaignSourceMedium'])
-        except KeyError as e:
+        except KeyError as _:
             pass
     return df
