@@ -8,8 +8,12 @@ connection = BaseHook.get_connection("grist_osp")
 grist_api_key = connection.password
 grist_server = connection.host
 
+def osp_grist_api(doc_id):
+    if grist_server is None:
+        raise ValueError("`grist_osp` connection does not define host")
+    return GristDocAPI(doc_id, grist_api_key, grist_server)
 
-def fetch_grist_table_data(doc_id, table_name, errors:Literal["ignore", "raise", "coerce"]="coerce"):
+def fetch_grist_table_data(doc_id, table_name, errors:Literal["raise", "coerce"]="coerce"):
     """
     Fetch data from a Grist table and return it as a pandas DataFrame with type validation.
 
@@ -20,6 +24,8 @@ def fetch_grist_table_data(doc_id, table_name, errors:Literal["ignore", "raise",
     Returns:
         pandas.DataFrame: The fetched data from Grist with validated data types
     """
+    if grist_server is None:
+        raise ValueError("`grist_osp` connection does not provide host")
     # Create Grist API instance with the provided document ID
     api = GristDocAPI(doc_id, server=grist_server, api_key=grist_api_key)
 

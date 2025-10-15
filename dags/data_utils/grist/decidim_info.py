@@ -1,20 +1,22 @@
 from __future__ import annotations
 
-import json
 import logging
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, List, Optional
-
+import json
 import pandas as pd
-import requests
 from airflow.hooks.base import BaseHook
-from grist_api import GristDocAPI
 from kubernetes import client as k8s_client
 from kubernetes import config as k8s_config
 from kubernetes.dynamic import DynamicClient
 from typing import Callable
+from airflow.models import Variable
 
+import requests
+
+from grist_api import GristDocAPI
+
+from dataclasses import dataclass
 
 @dataclass
 class K8sDecidimConfig:
@@ -433,7 +435,6 @@ def collect_and_push_to_grist(cfg: K8sDecidimConfig):
     Load kubeconfig, query K8s, detect version changes vs Grist, notify n8n per platform,
     then push the fresh snapshot into Grist.
     """
-    from airflow.models import Variable
 
     k8s_config.load_incluster_config()
     api_client = k8s_client.ApiClient()
@@ -446,6 +447,8 @@ def collect_and_push_to_grist(cfg: K8sDecidimConfig):
     grist_conn = BaseHook.get_connection(cfg.grist_conn_id)
     grist_api_key = grist_conn.password
     grist_server = grist_conn.host
+    if grist_server is None:
+        raise ValueError(f"connection {cfg.grist_conn_id} does not provide host")
 
     doc_id = Variable.get(cfg.grist_doc_var)
     table_name = Variable.get(cfg.grist_table_var)
