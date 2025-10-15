@@ -532,6 +532,8 @@ def collect_and_push_to_grist(cfg: K8sDecidimConfig):
         grist_conn = BaseHook.get_connection(cfg.grist_conn_id)
         grist_api_key = grist_conn.password
         grist_server = grist_conn.host
+        if grist_server is None:
+            raise ValueError(f"connection {cfg.grist_conn_id} does not provide host")
 
         doc_id = Variable.get(cfg.grist_doc_var)
         table_name = Variable.get(cfg.grist_table_var)
