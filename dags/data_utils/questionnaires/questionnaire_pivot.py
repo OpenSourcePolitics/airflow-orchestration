@@ -1,7 +1,7 @@
 from airflow.models import Variable
 import pandas as pd
 import json
-from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgres_connection
+from ..postgres_helper import dump_data_to_postgres, get_postgres_connection
 
 def get_questionnaires_ids(client_name):
     questionnaires_ids_dict_str = Variable.get("questionnaires_ids")
