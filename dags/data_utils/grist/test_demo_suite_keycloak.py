@@ -24,7 +24,7 @@ def _fake_variable_get(key):
 with patch("airflow.hooks.base.BaseHook.get_connection", side_effect=_fake_get_connection), \
      patch("airflow.models.Variable.get", side_effect=_fake_variable_get):
     # Import AFTER the patches so the module-level Airflow calls use the fakes
-    from demo_suite_keycloak import find_new_prospects, dump_df_to_grist_table
+    from .demo_suite_keycloak import find_new_prospects, dump_df_to_grist_table
 
 
 class TestFindNewProspects(unittest.TestCase):

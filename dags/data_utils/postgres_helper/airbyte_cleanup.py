@@ -1,4 +1,4 @@
-from .postgres_helper import get_postgres_connection
+from . import get_postgres_connection
 from sqlalchemy import text
 import time
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -17,14 +17,14 @@ def drop_airbyte_metadata(engine):
                 r RECORD; 
             BEGIN 
                 FOR r IN (
-                    SELECT tablename 
-                    FROM pg_tables 
+                    SELECT tablename
+                    FROM pg_tables
                     WHERE schemaname = 'airbyte_internal'
-                ) 
-                LOOP 
-                    EXECUTE 
-                        'DROP TABLE airbyte_internal.' || quote_ident(r.tablename) || ' CASCADE'; 
-                END LOOP; 
+                )
+                LOOP
+                    EXECUTE
+                        'DROP TABLE airbyte_internal.' || quote_ident(r.tablename) || ' CASCADE';
+                END LOOP;
             END $$;
         """)
 
@@ -34,7 +34,9 @@ def drop_airbyte_metadata(engine):
         # Setting autocommit=True ensures that each statement runs outside of a transaction,
         # preventing any potential conflicts and allowing the DROP TABLE command to execute successfully.
 
-        connection.execution_options(autocommit=True).execute(drop_airbyte_internal_query)
+        connection.execution_options(autocommit=True).execute(
+            drop_airbyte_internal_query
+        )
 
         print("Dropped all tables from airbyte_internal schema.")
 
@@ -44,20 +46,20 @@ def drop_airbyte_metadata(engine):
     # Drop all _airbyte tables from public and matomo schema
     try:
         drop_airbyte_tables_query = text("""
-        DO $$ 
-        DECLARE 
-            r RECORD; 
-        BEGIN 
+        DO $$
+        DECLARE
+            r RECORD;
+        BEGIN
             FOR r IN (
-                SELECT tablename, schemaname 
-                FROM pg_tables 
-                WHERE tablename LIKE '_airbyte%' 
+                SELECT tablename, schemaname
+                FROM pg_tables
+                WHERE tablename LIKE '_airbyte%'
                   AND schemaname IN ('public', 'matomo')
-            ) 
-            LOOP 
-                EXECUTE 
-                    'DROP TABLE ' || quote_ident(r.schemaname) || '.' || quote_ident(r.tablename) || ' CASCADE'; 
-            END LOOP; 
+            )
+            LOOP
+                EXECUTE
+                    'DROP TABLE ' || quote_ident(r.schemaname) || '.' || quote_ident(r.tablename) || ' CASCADE';
+            END LOOP;
         END $$;
         """)
 

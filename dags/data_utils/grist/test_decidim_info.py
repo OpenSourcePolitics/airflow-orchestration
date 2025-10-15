@@ -4,16 +4,15 @@ from types import SimpleNamespace
 import pandas as pd
 from unittest.mock import patch
 
-from decidim_info import (
+from .decidim_info import (
     find_version_changes,
     send_version_changes_to_n8n,
     parse_image_repo_name,
+    load_kube_api_client_from_connection,
+    build_dataframe_from_decidim_dicts
 )
 
-
 import pytest
-
-from decidim_info import load_kube_api_client_from_connection, build_dataframe_from_decidim_dicts
 
 @pytest.fixture
 def sample_kubeconfig_yaml():
@@ -32,8 +31,8 @@ def _make_conn(password="", extra=""):
     return SimpleNamespace(password=password, extra=extra)
 
 
-@patch("decidim_info.k8s_client.ApiClient")
-@patch("decidim_info.k8s_config.load_kube_config")
+@patch("data_utils.grist.decidim_info.k8s_client.ApiClient")
+@patch("data_utils.grist.decidim_info.k8s_config.load_kube_config")
 @patch("airflow.hooks.base.BaseHook.get_connection")
 def test_loader_accepts_password_prefix_base64(get_conn, load_cfg, api_client_cls, sample_kubeconfig_yaml, tmp_path):
     """
@@ -180,7 +179,7 @@ def test_find_version_changes_updates_and_new():
     assert z["New_Version"] == "v0"
 
 
-@patch("decidim_info.requests.post")
+@patch("data_utils.grist.decidim_info.requests.post")
 def test_send_version_changes_to_n8n(posts):
     df = pd.DataFrame(
         [
