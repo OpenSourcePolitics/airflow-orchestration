@@ -1,4 +1,8 @@
-from odoo_helper import fetch_invoices, process_invoices, export_csv_and_send_webhook
+from .odoo_helper import (
+    fetch_invoices,
+    process_invoices, 
+    export_csv_and_send_webhook
+)
 import unittest
 from unittest.mock import patch, MagicMock
 import pandas as pd
@@ -73,7 +77,7 @@ class TestOdooInvoicesAutomation(unittest.TestCase):
         self.assertEqual(len(invoices_to_keep), 1)
         self.assertEqual(invoices_to_keep[0]['id'], 1)
 
-    @patch('odoo_helper.fetch_lines')
+    @patch('data_utils.odoo.odoo_helper.fetch_lines')
     def test_process_invoices(self, mock_fetch_lines):
         """
         Test that processing invoices works
@@ -102,8 +106,8 @@ class TestOdooInvoicesAutomation(unittest.TestCase):
 
 class TestExportCSVAndSendWebhook(unittest.TestCase):
 
-    @patch("odoo_helper.requests.post")
-    @patch("odoo_helper.Variable.get")
+    @patch("data_utils.odoo.odoo_helper.requests.post")
+    @patch("data_utils.odoo.odoo_helper.Variable.get")
     def test_export_csv_and_send_webhook(self, mock_variable_get, mock_requests_post):
         """
         Test that the export_csv_and_send_webhook function correctly generates
