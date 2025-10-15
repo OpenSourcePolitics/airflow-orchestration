@@ -9,7 +9,7 @@ grist_api_key = connection.password
 grist_server = connection.host
 
 
-def fetch_grist_table_data(doc_id, table_name, errors=Literal["ignore", "raise", "coerce"]):
+def fetch_grist_table_data(doc_id, table_name, errors:Literal["ignore", "raise", "coerce"]="coerce"):
     """
     Fetch data from a Grist table and return it as a pandas DataFrame with type validation.
 
