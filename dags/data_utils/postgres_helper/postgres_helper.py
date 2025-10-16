@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine, text
 from airflow.hooks.base import BaseHook
-import logging
 
 
 def get_postgres_connection(connection_name, database):
@@ -25,7 +24,12 @@ def get_postgres_connection(connection_name, database):
 
 # Clean data in PostgreSQL within the date range
 def drop_table_in_postgres(connection, table_name):
-    """Drops the table if it exists."""
+    """
+    Drops the table if it exists.
+    Note: this function should not be used unless stricly necessary.
+    Droping tables are really rare event, and we rarely want to automate them.
+    Prefer to use `dump_data_to_postgres` with the `if_exists="replace"` argument.
+    """
     try:
         # Check if table exists and drop it only if it does
         drop_query = text(f"DROP TABLE IF EXISTS {table_name}")
@@ -48,3 +52,18 @@ def dump_data_to_postgres(
     except Exception as e:
         print(f"Failed to dump data into {table_name}: {e}")
         raise
+
+
+# Clean data in PostgreSQL within the date range
+def clean_data_in_postgres(connection, table_name, start_date, end_date):
+    """Deletes rows in the table where the 'date' is between the start_date and end_date."""
+    try:
+        delete_query = text(
+            f"DELETE FROM {table_name} WHERE date BETWEEN :start_date AND :end_date"
+        )
+        connection.execute(
+            delete_query, {"start_date": start_date, "end_date": end_date}
+        )
+        print(f"Cleaned data in {table_name} between {start_date} and {end_date}.")
+    except Exception as e:
+        print(f"Failed to clean data in {table_name}: {e}")

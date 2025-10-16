@@ -4,7 +4,11 @@ import pandas as pd
 
 from .matomo_campaign_helper import process_dataframe_for_campaign
 from .matomo_request_config import matomo_requests_config
-from .matomo_postgres_dump import get_postgres_connection, clean_data_in_postgres, dump_data_to_postgres
+from ..postgres_helper.postgres_helper import (
+    get_postgres_connection,
+    clean_data_in_postgres,
+    dump_data_to_postgres,
+)
 from .matomo_url import get_matomo_base_url, construct_url
 import logging
 
@@ -56,7 +60,7 @@ def fetch_data_for_day(base_url, report_name, config, day):
         error_message = f"Error fetching data for {report_name} on {day}: {str(e)}"
         raise Exception(error_message)
 
-    # Fetch data from Matomo for each day in the date range and merge into a single DataFrame
+
 def fetch_data_from_matomo(base_url, report_name, config, start_date, end_date):
     """Fetches data from Matomo for each day in the specified range and merges it into a single DataFrame."""
     date_range = pd.date_range(start=start_date, end=end_date).strftime('%Y-%m-%d').tolist()
@@ -70,13 +74,15 @@ def fetch_data_from_matomo(base_url, report_name, config, start_date, end_date):
         logger.warning(f"No data fetched for report '{report_name}' between {start_date} and {end_date}.")
         return pd.DataFrame()
 
-    # Main function to fetch and dump data
-def fetch_and_dump_data(matomo_site_id, database, day):
 
-    start_date = (pd.to_datetime(day) - pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+def fetch_and_dump_data(matomo_site_id, database, day):
+    """
+    Main function to fetch and dump data
+    """
+    start_date = (pd.to_datetime(day) - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     end_date = start_date
     base_url = get_matomo_base_url(matomo_site_id)
-    connection = get_postgres_connection(database)
+    connection = get_postgres_connection("matomo_postgres", database)
 
     if not connection:
         error_message = "Cannot proceed without database connection."
