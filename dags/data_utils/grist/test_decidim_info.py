@@ -1,5 +1,4 @@
-import os
-import base64
+
 from types import SimpleNamespace
 import pandas as pd
 from unittest.mock import patch
@@ -10,21 +9,8 @@ from .decidim_info import (
     parse_image_repo_name,
 )
 
-import pytest
 
-from decidim_info import build_dataframe_from_decidim_dicts
-
-@pytest.fixture
-def sample_kubeconfig_yaml():
-    # Minimal valid kubeconfig
-    return (
-        "apiVersion: v1\n"
-        "kind: Config\n"
-        "clusters: []\n"
-        "contexts: []\n"
-        "users: []\n"
-    )
-
+from .decidim_info import build_dataframe_from_decidim_dicts
 
 def _make_conn(password="", extra=""):
     # Simple stub matching the attributes used by BaseHook.get_connection
