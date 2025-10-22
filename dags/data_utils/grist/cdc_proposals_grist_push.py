@@ -1,13 +1,15 @@
 from airflow.hooks.base import BaseHook
 from grist_api import GristDocAPI
 from sqlalchemy import text
-from ..postgres_helper.postgres_helper import get_postgres_connection
+from ..postgres_helper import get_postgres_connection
 from airflow.models import Variable
 
 # Retrieve the connection object using Airflow's BaseHook
 connection = BaseHook.get_connection("grist_cdc")
 grist_api_key = connection.password
 grist_server = connection.host
+if grist_server is None:
+    raise ValueError("connection `grist_cdc` does not provide host")
 grist_cdc_doc_id = Variable.get("grist_cdc_doc_id")
 
 # Get api key from your Profile Settings, and run with GRIST_API_KEY=<key>
@@ -16,7 +18,7 @@ api = GristDocAPI(grist_cdc_doc_id, server=grist_server, api_key=grist_api_key)
 table_name = "Propositions_Decidim"
 
 def retrieve_sql_data(engine):
-    query = f"""
+    query = """
                 SELECT
                     id,
                     decidim_participatory_space_slug,

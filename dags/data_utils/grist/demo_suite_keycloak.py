@@ -3,31 +3,30 @@ from airflow.hooks.base import BaseHook
 from airflow.models import Variable
 import pandas as pd
 from types import SimpleNamespace
+from .grist_helper import osp_grist_api
 from grist_api import GristDocAPI
 import requests
 import numpy as np
 
 # Retrieve the connection object using Airflow's BaseHook
-grist_connection = BaseHook.get_connection("grist_osp")
-grist_api_key = grist_connection.password
-grist_server = grist_connection.host
 grist_commercial_doc_id = Variable.get("grist_commercial_doc_id")
+api = osp_grist_api(grist_commercial_doc_id)
 
 keycloak_connection = BaseHook.get_connection("keycloak_demo_suite")
 keycloak_server_url = keycloak_connection.host
-keycloak_username = keycloak_connection.login
 keycloak_password = keycloak_connection.password
 
 webhook_url = Variable.get("n8n_webhook_prospect_demo_suite_coop")
 grist_table_name = Variable.get("prospects_demo_suite_coop")
 
+
 def init_keycloak_admin(
-        server_url: str,
-        username: str,
-        password: str,
-        realm_name: str,
-        client_id: str = "admin-cli",
-        user_realm_name: str = "master",
+    server_url: str,
+    username: str,
+    password: str,
+    realm_name: str,
+    client_id: str = "admin-cli",
+    user_realm_name: str = "master",
 ) -> KeycloakAdmin:
     keycloak_connection = KeycloakOpenIDConnection(
         server_url=server_url,
@@ -41,24 +40,41 @@ def init_keycloak_admin(
 
     return KeycloakAdmin(connection=keycloak_connection)
 
+
 def extract_structure(val):
     if isinstance(val, dict) and "structure" in val and val["structure"]:
         return val["structure"][0]
     return np.nan
 
+
 def format_users_dataframe(users: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(users)
 
-    cols = ["username", "firstName", "lastName", "email", "emailVerified", "createdTimestamp", "attributes"]
+    cols = [
+        "username",
+        "firstName",
+        "lastName",
+        "email",
+        "emailVerified",
+        "createdTimestamp",
+        "attributes",
+    ]
     df = df[cols]
-    df.columns = ["pseudo", "prenom", "nom", "email", "email_verifie", "date_de_creation", "attributes"]
+    df.columns = [
+        "pseudo",
+        "prenom",
+        "nom",
+        "email",
+        "email_verifie",
+        "date_de_creation",
+        "attributes",
+    ]
     df["structure"] = df["attributes"].apply(extract_structure)
 
     if "date_de_creation" in df.columns:
-        df["date_de_creation"] = (
-            pd.to_datetime(df["date_de_creation"], unit="ms", utc=True)
-              .dt.strftime("%d-%m-%Y")
-        )
+        df["date_de_creation"] = pd.to_datetime(
+            df["date_de_creation"], unit="ms", utc=True
+        ).dt.strftime("%d-%m-%Y")
 
     return df
 
@@ -121,7 +137,9 @@ def dump_df_to_grist_table(
     )
 
 
-def find_new_prospects(df_keycloak: pd.DataFrame, df_grist_existing: pd.DataFrame) -> pd.DataFrame:
+def find_new_prospects(
+    df_keycloak: pd.DataFrame, df_grist_existing: pd.DataFrame
+) -> pd.DataFrame:
     """
     Compare two DataFrames and return prospects present in Keycloak but not in Grist.
     Matching on (email, prenom, nom).
@@ -135,10 +153,7 @@ def find_new_prospects(df_keycloak: pd.DataFrame, df_grist_existing: pd.DataFram
                 df[col] = None
 
     merged = df_keycloak.merge(
-        df_grist_existing,
-        on=["email", "prenom", "nom"],
-        how="left",
-        indicator=True
+        df_grist_existing, on=["email", "prenom", "nom"], how="left", indicator=True
     )
 
     # Keep only rows that don’t exist in Grist
@@ -148,7 +163,9 @@ def find_new_prospects(df_keycloak: pd.DataFrame, df_grist_existing: pd.DataFram
     return new_df[["email", "prenom", "nom"]].reset_index(drop=True)
 
 
-def send_new_prospects_to_n8n(webhook_url: str, new_df: pd.DataFrame, timeout: int = 10) -> None:
+def send_new_prospects_to_n8n(
+    webhook_url: str, new_df: pd.DataFrame, timeout: int = 10
+) -> None:
     """
     Send one POST request per new prospect to an n8n webhook.
     The payload JSON contains: email, prenom, nom.
@@ -162,9 +179,9 @@ def send_new_prospects_to_n8n(webhook_url: str, new_df: pd.DataFrame, timeout: i
     for p in payloads:
         # Minimal JSON body expected by your n8n workflow
         body = {
-            "email":  p.get("email"),
+            "email": p.get("email"),
             "prenom": p.get("prenom"),
-            "nom":    p.get("nom"),
+            "nom": p.get("nom"),
         }
         # You can add headers or auth if your webhook requires it
         r = requests.post(webhook_url, json=body, timeout=timeout)
@@ -188,10 +205,15 @@ def fetch_existing_grist_prospects(api: GristDocAPI, table_name: str) -> pd.Data
     return pd.DataFrame(data)
 
 
-
 def fetch_data_from_keycloak_and_dump_to_grist():
-    api = GristDocAPI(grist_commercial_doc_id, server=grist_server, api_key=grist_api_key)
+    api = osp_grist_api(grist_commercial_doc_id)
     existing_df = fetch_existing_grist_prospects(api, grist_table_name)
+    
+    if keycloak_server_url is None:
+        raise ValueError("`keycloak_demo_suite` missing server URL")
+    keycloak_username = keycloak_connection.login
+    if keycloak_username is None:
+        raise ValueError("`keycloak_demo_suite` missing username")
 
     kc = init_keycloak_admin(
         server_url=keycloak_server_url,

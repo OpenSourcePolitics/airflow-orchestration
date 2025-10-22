@@ -1,5 +1,5 @@
 import pandas as pd
-from ..postgres_helper.postgres_helper import dump_data_to_postgres, get_postgres_connection
+from ..postgres_helper import dump_data_to_postgres, get_postgres_connection
 import logging
 
 def retrieve_all_clients_data(query, connection):

@@ -1,19 +1,22 @@
 from __future__ import annotations
 
-import json
 import logging
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable, List, Optional
-
+import json
 import pandas as pd
-import requests
 from airflow.hooks.base import BaseHook
-from grist_api import GristDocAPI
 from kubernetes import client as k8s_client
 from kubernetes import config as k8s_config
 from kubernetes.dynamic import DynamicClient
+from typing import Callable
+from airflow.models import Variable
 
+import requests
+
+from grist_api import GristDocAPI
+
+from dataclasses import dataclass
 
 @dataclass
 class K8sDecidimConfig:
@@ -217,7 +220,7 @@ def dump_df_to_grist_table(
     api: GristDocAPI,
     table_name: str,
     df: pd.DataFrame,
-    date_provider: callable = lambda: datetime.now().date(),
+    date_provider: Callable = lambda: datetime.now().date(),
     chunk_size: int = 200,
 ):
     """
@@ -323,7 +326,7 @@ def fetch_existing_grist_platforms(api: GristDocAPI, table_name: str) -> pd.Data
     if "Host" not in df.columns:
         df["Host"] = ""
 
-    return df[["Namespace", "Name", "Version", "Host"]]
+    return df[["Namespace", "Name", "Version", "Host"]] # type: ignore
 
 
 def find_version_changes(df_new: pd.DataFrame, df_old: pd.DataFrame, notify_on_new: bool = True) -> pd.DataFrame:
@@ -432,7 +435,6 @@ def collect_and_push_to_grist(cfg: K8sDecidimConfig):
     Load kubeconfig, query K8s, detect version changes vs Grist, notify n8n per platform,
     then push the fresh snapshot into Grist.
     """
-    from airflow.models import Variable
 
     k8s_config.load_incluster_config()
     api_client = k8s_client.ApiClient()
@@ -445,6 +447,8 @@ def collect_and_push_to_grist(cfg: K8sDecidimConfig):
     grist_conn = BaseHook.get_connection(cfg.grist_conn_id)
     grist_api_key = grist_conn.password
     grist_server = grist_conn.host
+    if grist_server is None:
+        raise ValueError(f"connection {cfg.grist_conn_id} does not provide host")
 
     doc_id = Variable.get(cfg.grist_doc_var)
     table_name = Variable.get(cfg.grist_table_var)

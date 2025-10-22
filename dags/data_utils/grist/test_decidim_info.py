@@ -1,31 +1,16 @@
-import os
-import base64
+
 from types import SimpleNamespace
 import pandas as pd
 from unittest.mock import patch
 
-from decidim_info import (
+from .decidim_info import (
     find_version_changes,
     send_version_changes_to_n8n,
     parse_image_repo_name,
 )
 
 
-import pytest
-
-from decidim_info import build_dataframe_from_decidim_dicts
-
-@pytest.fixture
-def sample_kubeconfig_yaml():
-    # Minimal valid kubeconfig
-    return (
-        "apiVersion: v1\n"
-        "kind: Config\n"
-        "clusters: []\n"
-        "contexts: []\n"
-        "users: []\n"
-    )
-
+from .decidim_info import build_dataframe_from_decidim_dicts
 
 def _make_conn(password="", extra=""):
     # Simple stub matching the attributes used by BaseHook.get_connection
@@ -153,7 +138,7 @@ def test_find_version_changes_updates_and_new():
     assert z["New_Version"] == "v0"
 
 
-@patch("decidim_info.requests.post")
+@patch("data_utils.grist.decidim_info.requests.post")
 def test_send_version_changes_to_n8n(posts):
     df = pd.DataFrame(
         [
