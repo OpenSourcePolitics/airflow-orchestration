@@ -1,42 +1,36 @@
+from __future__ import annotations
+
+from typing import Literal, List
+
+import pandas as pd
 from airflow.hooks.base import BaseHook
 from grist_api import GristDocAPI
-import pandas as pd
-from typing import Literal
 
-# Retrieve the connection object using Airflow's BaseHook
-connection = BaseHook.get_connection("grist_osp")
-grist_api_key = connection.password
-grist_server = connection.host
-
-def osp_grist_api(doc_id):
+def _get_grist_api(connection_name, doc_id):
+    connection = BaseHook.get_connection(connection_name)
+    grist_api_key = connection.password
+    grist_server = connection.host
     if grist_server is None:
         raise ValueError("`grist_osp` connection does not define host")
     return GristDocAPI(doc_id, grist_api_key, grist_server)
 
-def fetch_grist_table_data(doc_id, table_name, errors:Literal["raise", "coerce"]="coerce"):
+
+def fetch_grist_table_data(doc_api, table_name, errors:Literal["raise", "coerce"]="coerce"):
     """
     Fetch data from a Grist table and return it as a pandas DataFrame with type validation.
 
     Args:
-        doc_id (str): The Grist document ID to fetch data from
+        doc_api: The Grist Doc API initialized with both the ID to fetch data from and the Grist connection
         table_name (str): Name of the Grist table to fetch data from
 
     Returns:
         pandas.DataFrame: The fetched data from Grist with validated data types
     """
-    if grist_server is None:
-        raise ValueError("`grist_osp` connection does not provide host")
-    # Create Grist API instance with the provided document ID
-    api = GristDocAPI(doc_id, server=grist_server, api_key=grist_api_key)
 
     # Fetch data from Grist table
-    data = api.fetch_table(table_name)
+    data = doc_api.fetch_table(table_name)
     df = pd.DataFrame(data)
 
-    # Validate and clean data types
-    # Grist does not have strict typing: string values can
-    # be stored in numerical columns. To avoir sql errors,
-    # we replace these values by none.
     for column in df.columns:
         # Handle numeric columns - convert invalid values to NaN
         if df[column].dtype == "object":
@@ -44,3 +38,43 @@ def fetch_grist_table_data(doc_id, table_name, errors:Literal["raise", "coerce"]
             df[column] = pd.to_numeric(df[column], errors=errors)
 
     return df
+
+
+import json
+from typing import List
+from grist_api import GristDocAPI
+
+def list_grist_tables(grist_api: GristDocAPI, include_metadata: bool = False) -> List[str]:
+    """
+    List table IDs for a given Grist document.
+
+    This handles the actual return type of GristDocAPI.tables(), which is a
+    `requests.Response`. We call `.json()` and accept multiple shapes:
+    - list[dict] of tables
+    - dict with a "tables" key containing list[dict]
+    """
+    resp = grist_api.tables()         # -> requests.Response
+    payload = resp.json()             # IMPORTANT: parse JSON
+
+    # Normalize to a list of dicts (tolerate both common shapes)
+    if isinstance(payload, dict) and "tables" in payload:
+        table_descs = payload["tables"]
+    elif isinstance(payload, list):
+        table_descs = payload
+    else:
+        raise RuntimeError(f"Unexpected payload when listing tables: {type(payload)}")
+
+    table_ids = []
+    for t in table_descs:
+        # Be tolerant to different field names
+        if isinstance(t, dict):
+            tid = t.get("id") or t.get("tableId") or t.get("name")
+        else:
+            tid = str(t)
+        if tid:
+            table_ids.append(tid)
+
+    if not include_metadata:
+        table_ids = [tid for tid in table_ids if not str(tid).startswith("_grist_")]
+
+    return table_ids
