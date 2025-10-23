@@ -1,4 +1,4 @@
-from .grist_helper import osp_grist_api
+from .grist_helper import _get_grist_api
 import pandas as pd
 from ..postgres_helper import (
     dump_data_to_postgres,
@@ -11,7 +11,7 @@ grist_ca_doc_id = Variable.get("grist_suivi_ca_doc_id")
 
 
 def fetch_and_dump_data(connection_name):
-    api = osp_grist_api(grist_ca_doc_id)
+    api = _get_grist_api("grist_osp", grist_ca_doc_id)
     data = api.fetch_table("SUIVI_CLIENTS")
     df = pd.DataFrame(data)
 

@@ -42,13 +42,12 @@ def drop_table_in_postgres(connection, table_name):
 
 # Dump DataFrame to PostgreSQL table
 def dump_data_to_postgres(
-    connection, data: pd.DataFrame, table_name, schema="public", if_exists: Literal["fail", "replace", "append"]="append"
+    connection, data: pd.DataFrame, table_name, schema="public", if_exists: Literal["fail", "replace", "append"]="append", dtype=None
 ):
     """Dumps the DataFrame into the specified PostgreSQL table."""
     try:
         data.to_sql(
-            table_name, connection, schema=schema, if_exists=if_exists, index=False
-        )
+            table_name, connection, schema=schema, if_exists=if_exists, index=False, dtype=dtype)
         print(f"Data for {table_name} dumped successfully into the table.")
     except Exception as e:
         print(f"Failed to dump data into {table_name}: {e}")
