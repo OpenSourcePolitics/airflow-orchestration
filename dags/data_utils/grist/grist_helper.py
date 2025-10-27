@@ -5,6 +5,8 @@ from typing import Literal, List
 import pandas as pd
 from airflow.hooks.base import BaseHook
 from grist_api import GristDocAPI
+import re
+
 
 def _get_grist_api(connection_name, doc_id):
     connection = BaseHook.get_connection(connection_name)
@@ -15,7 +17,28 @@ def _get_grist_api(connection_name, doc_id):
     return GristDocAPI(doc_id, grist_api_key, grist_server)
 
 
-def fetch_grist_table_data(doc_api, table_name, errors:Literal["raise", "coerce"]="coerce"):
+def sanitize_identifier(name: str) -> str:
+    """
+    Convert an arbitrary string into a safe SQL identifier (for table names).
+
+    Parameters
+    ----------
+    name : str
+        Original identifier.
+
+    Returns
+    -------
+    str
+        Lowercase identifier with only [a-z0-9_] characters.
+    """
+    slug = re.sub(r"\W+", "_", name.strip().lower())
+    slug = re.sub(r"_+", "_", slug).strip("_")
+    return slug or "table"
+
+
+def fetch_grist_table_data(
+    doc_api, table_name, errors: Literal["raise", "coerce"] = "coerce"
+):
     """
     Fetch data from a Grist table and return it as a pandas DataFrame with type validation.
 
@@ -40,11 +63,9 @@ def fetch_grist_table_data(doc_api, table_name, errors:Literal["raise", "coerce"
     return df
 
 
-import json
-from typing import List
-from grist_api import GristDocAPI
-
-def list_grist_tables(grist_api: GristDocAPI, include_metadata: bool = False) -> List[str]:
+def list_grist_tables(
+    grist_api: GristDocAPI, include_metadata: bool = False
+) -> List[str]:
     """
     List table IDs for a given Grist document.
 
@@ -53,8 +74,8 @@ def list_grist_tables(grist_api: GristDocAPI, include_metadata: bool = False) ->
     - list[dict] of tables
     - dict with a "tables" key containing list[dict]
     """
-    resp = grist_api.tables()         # -> requests.Response
-    payload = resp.json()             # IMPORTANT: parse JSON
+    resp = grist_api.tables()  # -> requests.Response
+    payload = resp.json()  # IMPORTANT: parse JSON
 
     # Normalize to a list of dicts (tolerate both common shapes)
     if isinstance(payload, dict) and "tables" in payload:

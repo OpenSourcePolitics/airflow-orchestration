@@ -1,0 +1,77 @@
+import sqlalchemy
+import re
+import pandas as pd
+from .grist_helper import sanitize_identifier
+
+
+class GristTypes:
+    expr_easy_types = [
+        (re.compile("^Text$"), sqlalchemy.Text()),
+        (re.compile("^Numeric$"), sqlalchemy.Float()),
+        (re.compile("^Int$"), sqlalchemy.Integer()),
+        (re.compile("^Bool$"), sqlalchemy.Boolean()),
+        (re.compile("^Date$"), sqlalchemy.Date()),
+        (re.compile("^DateTime:(.*)$"), sqlalchemy.DateTime()),
+        (re.compile("^Choice$"), sqlalchemy.String()),
+        (re.compile("^Any$"), sqlalchemy.Text()),
+    ]
+    expr_choicelist = re.compile("^ChoiceList$")
+    expr_ref = re.compile("^Ref:(.*)$")
+    expr_reflist = re.compile("^RefList:(.*)$")
+
+    def __init__(self, id, grist_fields, explode=False):
+        self.id = id
+        self.multiple = False
+        self.explode = explode
+        self.ref_table = None
+        type_str = grist_fields["type"]
+        for expr, t in GristTypes.expr_easy_types:
+            if expr.match(type_str):
+                self.sql_type = t
+                if explode:
+                    return ValueError(
+                        f"column {id} of type {type_str} cannot be exploded"
+                    )
+                return
+
+        if GristTypes.expr_ref.match(type_str):
+            if explode:
+                return ValueError(f"column {id} of type `ref` cannot be exploded")
+            self.ref_table = sanitize_identifier(
+                GristTypes.expr_ref.match(type_str).group(1)
+            )
+            self.sql_type = sqlalchemy.Integer()
+            return
+
+        if GristTypes.expr_choicelist.match(type_str):
+            self.multiple = True
+            if explode:
+                self.sql_type = sqlalchemy.String()
+            else:
+                self.sql_type = sqlalchemy.JSON()
+            return
+
+        if GristTypes.expr_reflist.match(type_str):
+            self.multiple = True
+            if explode:
+                self.sql_type = sqlalchemy.Integer()
+            else:
+                self.sql_type = sqlalchemy.JSON()
+            return
+
+        print(f"Type {type_str} not supported, droppping column")
+        self.sql_type = None
+
+    def modify_df(self, df):
+        if self.sql_type is None:
+            df = df.drop(columns=[self.id])
+        if isinstance(self.sql_type, sqlalchemy.Date) or isinstance(
+            self.sql_type, sqlalchemy.DateTime
+        ):
+            df[self.id] = pd.to_datetime(df[self.id], unit="s")
+        if self.multiple:
+            df[self.id] = df[self.id].map(lambda x: x[1:] if x else x)
+            print(df[self.id])
+        if self.explode:
+            df = df.explode(self.id)
+        return df
