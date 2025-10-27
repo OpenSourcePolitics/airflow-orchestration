@@ -1,3 +1,5 @@
+import json
+
 import sqlalchemy
 import re
 import pandas as pd
@@ -71,7 +73,8 @@ class GristTypes:
             df[self.id] = pd.to_datetime(df[self.id], unit="s")
         if self.multiple:
             df[self.id] = df[self.id].map(lambda x: x[1:] if x else x)
-            print(df[self.id])
         if self.explode:
             df = df.explode(self.id)
+        if isinstance(self.sql_type, sqlalchemy.Text):
+            df[self.id] = df[self.id].map(lambda x: json.dumps(x) if isinstance(x, list) or isinstance(x, dict) else x)
         return df

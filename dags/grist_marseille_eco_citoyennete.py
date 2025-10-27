@@ -17,12 +17,13 @@ with DAG(
     catchup=False,
     tags=["marseille", "grist"],
 ) as dag:
+    columns_to_explode = [("Mobilite", "Transport")]
     doc_id = Variable.get("grist_marseille_eco-citoyennete")
     api = _get_grist_api("grist_marseille", doc_id)
     fetch_grist_data = PythonOperator(
         task_id='fetch_and_dump_grist_data',
         python_callable=dump_document_to_postgres,
-        op_args=[api, f"{connection_name}", "marseille", "eco_citoyennete"],
+        op_args=[api, f"{connection_name}", "marseille", "eco_citoyennete", columns_to_explode],
         dag=dag,
         on_failure_callback=task_failed,
     )

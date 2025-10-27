@@ -13,15 +13,17 @@ def dump_grist_table_to_postgres(
     api: GristDocAPI,
     connection: Connection,
     grist_table_name,
+    prefix,
     if_exists,
-    explode_columns=[],
+    schema,
+    columns_to_explode=[],
 ):
     columns = api.columns(grist_table_name).json()["columns"]
     table_name = sanitize_identifier(grist_table_name)
     column_types = []
     for c in columns:
-        explode = c["id"] in explode_columns
-        column_types.append(GristTypes(c["id"], c["fields"], expode=explode))
+        explode = c["id"] in columns_to_explode
+        column_types.append(GristTypes(c["id"], c["fields"], explode=explode))
 
     dtype_map = {}
     records = api.call(f"tables/{grist_table_name}/records").json()["records"]
@@ -32,8 +34,9 @@ def dump_grist_table_to_postgres(
             dtype_map[c.id] = c.sql_type
 
     df.to_sql(
-        table_name,
+        f"{prefix}_{table_name}",
         connection,
+        schema=schema,
         dtype=dtype_map,
         if_exists=if_exists,
         index_label="id",
@@ -41,7 +44,7 @@ def dump_grist_table_to_postgres(
 
     """
     # This code is not used because exploding and unique foreign keys is not compatible.
-    # For detials, see here: https://github.com/OpenSourcePolitics/airflow-orchestration/pull/82
+    # For details, see here: https://github.com/OpenSourcePolitics/airflow-orchestration/pull/82
 
     with engine.begin() as conn:
         conn.execute(
@@ -64,10 +67,10 @@ def dump_document_to_postgres(
     connection_name: str,
     database: str,
     prefix: str,
+    columns_to_explode: List[Tuple[str, str]] = [],
     schema: str = "grist",
     if_exists="replace",
     include_metadata: bool = False,
-    columns_to_explode: List[Tuple[str, str]] = [],
 ):
     """
     columns_to_explode is a list of (table_name, column_name) that the user wants to explode.
@@ -87,8 +90,10 @@ def dump_document_to_postgres(
                 api,
                 connection,
                 table_id,
-                columns_to_explode=columns_for_this_table,
                 if_exists=if_exists,
+                prefix=prefix,
+                schema=schema,
+                columns_to_explode=columns_for_this_table,
             )
     finally:
         connection.close()
