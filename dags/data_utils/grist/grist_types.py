@@ -72,9 +72,16 @@ class GristTypes:
         ):
             df[self.id] = pd.to_datetime(df[self.id], unit="s")
         if self.multiple:
+            # grist uses a specific format for lists:
+            # [a, b] is represented by ["L", "a", "b"].
+            # we remove the leading "L"
             df[self.id] = df[self.id].map(lambda x: x[1:] if x else x)
-        if self.explode:
-            df = df.explode(self.id)
         if isinstance(self.sql_type, sqlalchemy.Text):
-            df[self.id] = df[self.id].map(lambda x: json.dumps(x) if isinstance(x, list) or isinstance(x, dict) else x)
+            # for the columns of type text or any,
+            # we serialize the object when it's a list of a dict.
+            df[self.id] = df[self.id].map(
+                lambda x: json.dumps(x)
+                if isinstance(x, list) or isinstance(x, dict)
+                else x
+            )
         return df
