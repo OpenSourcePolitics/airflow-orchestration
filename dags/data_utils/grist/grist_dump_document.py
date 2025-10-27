@@ -24,7 +24,7 @@ def dump_grist_table_to_postgres(
         column_types.append(GristTypes(c["id"], c["fields"], expode=explode))
 
     dtype_map = {}
-    records = api.call("tables/Table/records").json()["records"]
+    records = api.call(f"tables/{grist_table_name}/records").json()["records"]
     df = pd.DataFrame([r["fields"] for r in records])
     for c in column_types:
         df = c.modify_df(df)
