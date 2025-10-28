@@ -3,14 +3,15 @@ from ..postgres_helper import (
     get_postgres_connection,
 )
 from airflow.models import Variable
-from .grist_helper import fetch_grist_table_data
-
+from .grist_helper import fetch_grist_table_data, _get_grist_api
 grist_ca_doc_id = Variable.get("grist_ca_doc_id")
 
 
 def fetch_and_dump_data(connection_name):
     # Fetch data from Grist using the new utility function
-    df = fetch_grist_table_data(grist_ca_doc_id, "Suivi_CA_par_clients")
+
+    api = _get_grist_api("grist_osp", grist_ca_doc_id)
+    df = fetch_grist_table_data(api, "Suivi_CA_par_clients")
 
     df["Prestations_2024"] = df["Prestations_2024"].astype(str)
 
