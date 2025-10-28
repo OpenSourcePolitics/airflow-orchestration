@@ -26,39 +26,41 @@ class GristTypes:
         self.multiple = False
         self.explode = explode
         self.ref_table = None
+        self.exploded_ref_table = None
         type_str = grist_fields["type"]
         for expr, t in GristTypes.expr_easy_types:
             if expr.match(type_str):
                 self.sql_type = t
                 if explode:
-                    return ValueError(
+                    raise ValueError(
                         f"column {id} of type {type_str} cannot be exploded"
                     )
                 return
 
-        if GristTypes.expr_ref.match(type_str):
+        match_ref = GristTypes.expr_ref.match(type_str)
+        if match_ref:
             if explode:
-                return ValueError(f"column {id} of type `ref` cannot be exploded")
-            self.ref_table = sanitize_identifier(
-                GristTypes.expr_ref.match(type_str).group(1)
-            )
+                raise ValueError(f"column {id} of type `ref` cannot be exploded")
+            self.ref_table = sanitize_identifier(match_ref.group(1))
             self.sql_type = sqlalchemy.Integer()
+            return
+
+        match_reflist = GristTypes.expr_reflist.match(type_str)
+        if match_reflist:
+            self.multiple = True
+            # TODO: use json instead of string.
+            # metabase could in theory handle it
+            self.sql_type = sqlalchemy.String()
+            self.exploded_sql_type = sqlalchemy.Integer()
+            self.exploded_ref_table = sanitize_identifier(match_reflist.group(1))
             return
 
         if GristTypes.expr_choicelist.match(type_str):
             self.multiple = True
-            if explode:
-                self.sql_type = sqlalchemy.String()
-            else:
-                self.sql_type = sqlalchemy.JSON()
-            return
-
-        if GristTypes.expr_reflist.match(type_str):
-            self.multiple = True
-            if explode:
-                self.sql_type = sqlalchemy.Integer()
-            else:
-                self.sql_type = sqlalchemy.JSON()
+            # TODO: use json instead of string.
+            # metabase could in theory handle it
+            self.sql_type = sqlalchemy.String()
+            self.exploded_sql_type = sqlalchemy.String()
             return
 
         print(f"Type {type_str} not supported, droppping column")

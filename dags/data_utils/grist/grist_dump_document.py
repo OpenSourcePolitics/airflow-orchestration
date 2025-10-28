@@ -1,7 +1,8 @@
 from typing import Tuple, List
+from airflow.utils import sqlalchemy
 import pandas as pd
 from grist_api import GristDocAPI
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import Connection, Inspector
 from sqlalchemy import text as sql_text
 from .grist_types import GristTypes
 from .grist_helper import list_grist_tables, sanitize_identifier
@@ -10,7 +11,7 @@ from ..postgres_helper import (
 )
 
 
-def dump_grist_table_to_postgres(
+def _dump_grist_table_to_postgres(
     api: GristDocAPI,
     connection: Connection,
     grist_table_name,
@@ -18,8 +19,15 @@ def dump_grist_table_to_postgres(
     if_exists,
     schema,
     columns_to_explode=[],
-):
-    columns = api.columns(grist_table_name).json()["columns"]
+) -> List:
+    """
+    return a list of sql constraint to add to the tables once they are created
+    """
+    constraints = []
+    columns_response = api.columns(grist_table_name)
+    if columns_response is None:
+        raise ValueError("failed fetching tables")
+    columns = columns_response.json()["columns"]
     table_name = sanitize_identifier(grist_table_name)
     column_types: List[GristTypes] = []
     for c in columns:
@@ -33,26 +41,47 @@ def dump_grist_table_to_postgres(
         df = c.modify_df(df)
         if c.sql_type is not None:
             dtype_map[c.id] = c.sql_type
+        if c.ref_table:
+            constraints.append(
+                sql_text(
+                    f'ALTER TABLE "{table_name}" '
+                    'ADD CONSTRAINT fk_source FOREIGN KEY ("source") '
+                    'REFERENCES "{c.ref_table}" ("id");'
+                )
+            )
         if c.explode:
             # create auxiliary table with a one to many relationship
-            df = df[[c.id]].explode()
+            column_name_in_exploded = f"target_{c.id}"
+            df_exploded = (
+                df[[c.id]]
+                .explode(c.id)
+                .dropna()
+                .reset_index()
+                .rename(columns={"index": "source", c.id: column_name_in_exploded})
+            )
             exploded_table_name = f"{prefix}_{table_name}_exploded_by_{c.id}"
-            df.to_sql(
+            df_exploded.to_sql(
                 exploded_table_name,
                 connection,
+                dtype={column_name_in_exploded: c.exploded_sql_type},
                 schema=schema,
                 if_exists=if_exists,
                 index=False,
             )
-            connection.execute(
+
+            constraints.append(
                 sql_text(
-                    f'ALTER TABLE "{exploded_table_name}" ADD CONSTRAINT fk_source_{c.id} FOREIGN KEY ("source_{c.id}") REFERENCES "{table_name}" ("id");'
+                    f'ALTER TABLE {schema}."{exploded_table_name}" '
+                    f'ADD CONSTRAINT fk_source FOREIGN KEY ("source") '
+                    f'REFERENCES "{table_name}" ("id");'
                 )
             )
-            if c.ref_table:
-                connection.execute(
+            if c.exploded_ref_table:
+                constraints.append(
                     sql_text(
-                        f'ALTER TABLE "{exploded_table_name}" ADD CONSTRAINT fk_target_{c.id} FOREIGN KEY ("target_{c.id}") REFERENCES "{c.ref_table}" ("id");'
+                        f'ALTER TABLE {schema}."{exploded_table_name}" '
+                        f'ADD CONSTRAINT fk_target_{c.id} FOREIGN KEY ("{column_name_in_exploded}") '
+                        f'REFERENCES "{c.ref_table}" ("id");'
                     )
                 )
 
@@ -65,16 +94,7 @@ def dump_grist_table_to_postgres(
         index_label="id",
     )
 
-    connection.execute(
-        sql_text('ALTER TABLE "table" ADD CONSTRAINT table_id_key UNIQUE ("id");')
-    )
-
-    # Add foreign key constraints after data is inserted
-    for c in column_types:
-        constraint = c.constraint("table")
-        if constraint is not None:
-            connection.execute(constraint)
-    connection.commit()
+    return constraints
 
 
 def dump_document_to_postgres(
@@ -94,6 +114,7 @@ def dump_document_to_postgres(
     """
     engine = get_postgres_connection(connection_name, database)
     connection = engine.connect()
+    constraints = []
     try:
         grist_tables = list_grist_tables(api, include_metadata=include_metadata)
 
@@ -101,7 +122,7 @@ def dump_document_to_postgres(
             columns_for_this_table = [
                 c for (t, c) in columns_to_explode if t == table_id
             ]
-            dump_grist_table_to_postgres(
+            constraints_to_add = _dump_grist_table_to_postgres(
                 api,
                 connection,
                 table_id,
@@ -110,5 +131,9 @@ def dump_document_to_postgres(
                 schema=schema,
                 columns_to_explode=columns_for_this_table,
             )
+            constraints.extend(constraints_to_add)
+
+        for contraint in constraints:
+            connection.execute(contraint)
     finally:
         connection.close()
