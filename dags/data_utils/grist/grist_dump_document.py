@@ -133,7 +133,8 @@ def dump_document_to_postgres(
             )
             constraints.extend(constraints_to_add)
 
-        for contraint in constraints:
-            connection.execute(contraint)
+        for constraint in constraints:
+            print(constraint)
+            connection.execute(constraint)
     finally:
         connection.close()
