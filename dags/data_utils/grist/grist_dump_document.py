@@ -375,7 +375,38 @@ def _dump_grist_table_to_postgres(
             ref_table_name = f"{prefix}_{ref_base}"
             fk_constraints.append(_exploded_fk_target(schema, exploded_table_name, target_col, ref_table_name))
 
+    print(f"Succesfully dump {grist_table_name}")
     return pk_constraints, fk_constraints
+
+
+def drop_tables_with_prefix(connection, schema: str, prefix: str):
+    """
+    Drop all tables in a given schema whose names start with the given prefix.
+    Uses PostgreSQL catalog to identify matching tables.
+    """
+    try:
+        query = sql_text(
+            """
+            SELECT table_name FROM information_schema.tables
+            WHERE table_schema = :schema
+            AND table_name LIKE :prefix
+            """
+        )
+
+        result = connection.execute(query, {"schema": schema, "prefix": f"{prefix}%"})
+        tables = [row[0] for row in result]
+
+        if not tables:
+            print(f"Aucune table à supprimer dans le schéma '{schema}' avec le préfixe '{prefix}'.")
+            return
+
+        for table in tables:
+            fq_table_name = f'"{schema}"."{table}"'
+            drop_query = sql_text(f'DROP TABLE IF EXISTS {fq_table_name} CASCADE')
+            connection.execute(drop_query)
+            print(f"Dropped table {fq_table_name}")
+    except Exception as e:
+        print(f"Erreur lors du drop des tables avec préfixe '{prefix}' dans le schéma '{schema}': {e}")
 
 
 # ==========================================
@@ -409,6 +440,9 @@ def dump_document_to_postgres(
         explode_map.setdefault(t, []).append(c)
 
     engine = get_postgres_connection(connection_name, database)
+
+    with engine.begin() as connection:
+        drop_tables_with_prefix(connection, schema=schema, prefix=prefix)
 
     all_pk_ddl: List[Any] = []
     all_fk_ddl: List[Any] = []
