@@ -4,7 +4,7 @@ from airflow.hooks.base import BaseHook
 from airflow.models import Variable
 from requests.auth import HTTPBasicAuth
 
-from .grist.grist_helper import osp_grist_api
+from data_utils.grist.grist_helper import osp_grist_api
 
 connection_helpscout = BaseHook.get_connection("helpscout")
 assert connection_helpscout.login is not None
