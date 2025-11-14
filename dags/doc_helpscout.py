@@ -11,7 +11,7 @@ helpscout_collection = "5d1c770a04286369ad8d1458"
 with DAG(
     dag_id="fecth_helpscout_doc",
     default_args={"owner": "airflow"},
-    schedule="45 0 * * *",
+    schedule="50 0 * * *",
     start_date=pendulum.datetime(2024, 11, 15, tz="UTC"),
     catchup=False,
 ) as dag:
