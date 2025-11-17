@@ -44,7 +44,7 @@ def dump_helpscout_collection_to_grist(collection_id):
     )
     final_table["published"] = final_table["status"] == "published"
 
-    api = osp_grist_api("grist_doc_id")
+    api = osp_grist_api(grist_doc_id)
 
     api.sync_table(
         "Articles",
