@@ -4,7 +4,7 @@ from airflow.hooks.base import BaseHook
 from airflow.models import Variable
 from requests.auth import HTTPBasicAuth
 
-from data_utils.grist.grist_helper import osp_grist_api
+from data_utils.grist.grist_helper import get_grist_api
 
 connection_helpscout = BaseHook.get_connection("helpscout")
 assert connection_helpscout.login is not None
@@ -44,7 +44,7 @@ def dump_helpscout_collection_to_grist(collection_id):
     )
     final_table["published"] = final_table["status"] == "published"
 
-    api = osp_grist_api(grist_doc_id)
+    api = get_grist_api("grist_osp", grist_doc_id)
 
     api.sync_table(
         "Articles",
