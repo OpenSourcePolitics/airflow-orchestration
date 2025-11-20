@@ -488,7 +488,7 @@ def dump_document_to_postgres(
         api: the GristDocApi to use to get the document.
         engine: the sql engine to use to dump the databse
         database: the postgres namespace where the db will be created / updated
-        prefix: string that will be appened to each table name
+        prefix: string that will be appened to each table name. You do not need to include a underscore.
         tables: the list of table names to export. If not provided, all tables will be exported
         columns_to_explode: list of (table_name, column_name) that will be exploded.
                             Only a column of type reference list or choice list can be exploded.

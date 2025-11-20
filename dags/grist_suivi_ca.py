@@ -26,7 +26,7 @@ with DAG(
         op_kwargs={
             "api": api,
             "engine": engine,
-            "prefix": "ca_",
+            "prefix": "ca",
             "tables": ["Clients", "Prestations"],
         },
         dag=dag,
