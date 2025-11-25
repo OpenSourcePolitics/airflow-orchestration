@@ -63,7 +63,7 @@ spec:
         repo: https://github.com/OpenSourcePolitics/airflow-orchestration
         branch: main
         subPath: dags
-        rev: "refs/tags/dags-v1.3.14"
+        rev: "refs/tags/dags-v1.3.15"
         wait: 300
         maxFailures: 3
     images:
