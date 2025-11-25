@@ -10,25 +10,24 @@ from data_utils.postgres_helper import get_postgres_connection
 connection_name = "main_db_cluster_name"
 
 with DAG(
-    dag_id="grist_marseille_eco_citoyennete",
+    dag_id="grist_suivi_ca",
     default_args={"owner": "airflow"},
-    schedule="15 3 * * *",
+    schedule="45 0 * * *",
     start_date=pendulum.datetime(2024, 11, 15, tz="UTC"),
     catchup=False,
-    tags=["marseille", "grist"],
+    tags=["grist"],
 ) as dag:
-    columns_to_explode = [("Mobilite", "Transport")]
-    doc_id = Variable.get("grist_marseille_eco-citoyennete")
-    api = get_grist_api("grist_marseille", doc_id)
-    engine = get_postgres_connection(connection_name, "marseille")
+    doc_id = Variable.get("grist_suivi_ca_doc_id")
+    api = get_grist_api("grist_osp", doc_id)
+    engine = get_postgres_connection(connection_name, "aggregated_client_data")
     fetch_grist_data = PythonOperator(
         task_id="fetch_and_dump_grist_data",
         python_callable=dump_document_to_postgres,
         op_kwargs={
             "api": api,
             "engine": engine,
-            "prefix": "eco_citoyennete",
-            "columns_to_explode": columns_to_explode,
+            "prefix": "ca",
+            "tables": ["Clients", "Prestations"],
         },
         dag=dag,
         on_failure_callback=task_failed,
