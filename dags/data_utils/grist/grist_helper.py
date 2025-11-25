@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Literal, List
+import re
+from typing import List, Literal
 
 import pandas as pd
 from airflow.hooks.base import BaseHook
 from grist_api import GristDocAPI
-import re
 
 
 def get_grist_api(connection_name, doc_id):
@@ -37,7 +37,7 @@ def sanitize_identifier(name: str) -> str:
 
 
 def fetch_grist_table_data(
-    doc_api, table_name, errors: Literal["raise", "coerce"] = "coerce"
+    doc_api: GristDocAPI, table_name, errors: Literal["raise", "coerce"] = "coerce"
 ):
     """
     Fetch data from a Grist table and return it as a pandas DataFrame with type validation.

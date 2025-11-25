@@ -1,3 +1,5 @@
+from airflow.models import Variable
+
 from ..postgres_helper import (
     dump_data_to_postgres,
     get_postgres_connection,
