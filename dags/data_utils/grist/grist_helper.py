@@ -8,7 +8,7 @@ from grist_api import GristDocAPI
 import re
 
 
-def _get_grist_api(connection_name, doc_id):
+def get_grist_api(connection_name, doc_id):
     connection = BaseHook.get_connection(connection_name)
     grist_api_key = connection.password
     grist_server = connection.host

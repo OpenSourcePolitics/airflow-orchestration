@@ -3,7 +3,7 @@ from airflow.hooks.base import BaseHook
 from airflow.models import Variable
 import pandas as pd
 from types import SimpleNamespace
-from .grist_helper import _get_grist_api
+from .grist_helper import get_grist_api
 from grist_api import GristDocAPI
 import requests
 import numpy as np
@@ -205,7 +205,7 @@ def fetch_existing_grist_prospects(api: GristDocAPI, table_name: str) -> pd.Data
 
 
 def fetch_data_from_keycloak_and_dump_to_grist():
-    api = _get_grist_api("grist_osp", grist_commercial_doc_id)
+    api = get_grist_api("grist_osp", grist_commercial_doc_id)
     existing_df = fetch_existing_grist_prospects(api, grist_table_name)
     
     if keycloak_server_url is None:
