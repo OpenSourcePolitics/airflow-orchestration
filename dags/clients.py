@@ -95,6 +95,14 @@ clients = {
             "collection_name": "Grand Nancy", "database_id": 170, "language": "fr"
         },
     },
+    "grand_poitiers": {
+        "postgres": {
+            "database_name": "grand_poitiers"
+        },
+        "metabase": {
+            "collection_name": "Grand Poitiers", "database_id": 285, "language": "fr"
+        },
+    },
     "lyon": {
         "postgres": {
             "database_name": "lyon"
