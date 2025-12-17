@@ -29,6 +29,7 @@ with DAG(
             grist_conn_id="grist_osp",
             grist_doc_var="grist_decidim_document_id",
             grist_table_var="grist_osp_plateformes_decidim",
+            grist_history_table_var="grist_osp_plateformes_decidim_history",
             api_version="apps.libre.sh/v1alpha1",
             kind="Decidim",
         )
