@@ -23,6 +23,14 @@ clients = {
             "collection_name": "Bagneux", "database_id": 206, "language": "fr"
         },
     },
+    "brandenburg": {
+        "postgres": {
+            "database_name": "brandenburg"
+        },
+        "metabase": {
+            "collection_name": "Brandenburg", "database_id": 286, "language": "de"
+        },
+    },
     "cachan": {
         "postgres": {
             "database_name": "cachan"
