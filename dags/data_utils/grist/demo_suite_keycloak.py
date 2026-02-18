@@ -9,6 +9,8 @@ from grist_api import GristDocAPI
 from keycloak import KeycloakAdmin, KeycloakOpenIDConnection
 
 from .grist_helper import get_grist_api
+import time
+import requests
 
 # Retrieve the connection object using Airflow's BaseHook
 grist_commercial_doc_id = Variable.get("grist_commercial_doc_id")
@@ -165,7 +167,10 @@ def find_new_prospects(
 
 
 def send_new_prospects_to_n8n(
-    webhook_url: str, new_df: pd.DataFrame, timeout: int = 10
+    webhook_url: str,
+    new_df: pd.DataFrame,
+    timeout: int = 10,
+    sleep_s: float = 2.0,
 ) -> None:
     """
     Send one POST request per new prospect to an n8n webhook.
@@ -176,17 +181,12 @@ def send_new_prospects_to_n8n(
 
     # Convert to list of dicts
     payloads = new_df.replace({pd.NA: None}).to_dict(orient="records")
+    session = requests.Session()
 
     for p in payloads:
-        # Minimal JSON body expected by your n8n workflow
-        body = {
-            "email": p.get("email"),
-            "prenom": p.get("prenom"),
-            "nom": p.get("nom"),
-        }
-        # You can add headers or auth if your webhook requires it
-        r = requests.post(webhook_url, json=body, timeout=timeout)
-        r.raise_for_status()
+        body = {"email": p.get("email"), "prenom": p.get("prenom"), "nom": p.get("nom")}
+        session.post(webhook_url, json=body, timeout=timeout).raise_for_status()
+        time.sleep(sleep_s)
 
 
 def fetch_existing_grist_prospects(api: GristDocAPI, table_name: str) -> pd.DataFrame:

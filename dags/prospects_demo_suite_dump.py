@@ -7,7 +7,7 @@ from data_utils.grist.demo_suite_keycloak import fetch_data_from_keycloak_and_du
 with DAG(
         dag_id='prospects_demo_suite_dump',
         default_args={'owner': 'airflow'},
-        schedule='45 0 * * *',
+        schedule='30 9 * * *',
         start_date=pendulum.datetime(2024, 11, 15, tz="UTC"),
         catchup=False
 ) as dag:
