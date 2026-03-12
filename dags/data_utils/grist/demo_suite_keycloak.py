@@ -166,29 +166,6 @@ def find_new_prospects(
     return new_df[["email", "prenom", "nom"]].reset_index(drop=True)
 
 
-def send_new_prospects_to_n8n(
-    webhook_url: str,
-    new_df: pd.DataFrame,
-    timeout: int = 10,
-    sleep_s: float = 2.0,
-) -> None:
-    """
-    Send one POST request per new prospect to an n8n webhook.
-    The payload JSON contains: email, prenom, nom.
-    """
-    if new_df.empty:
-        return
-
-    # Convert to list of dicts
-    payloads = new_df.replace({pd.NA: None}).to_dict(orient="records")
-    session = requests.Session()
-
-    for p in payloads:
-        body = {"email": p.get("email"), "prenom": p.get("prenom"), "nom": p.get("nom")}
-        session.post(webhook_url, json=body, timeout=timeout).raise_for_status()
-        time.sleep(sleep_s)
-
-
 def fetch_existing_grist_prospects(api: GristDocAPI, table_name: str) -> pd.DataFrame:
     """
     Fetch current rows from a Grist table and return them as a pandas DataFrame
@@ -227,4 +204,3 @@ def fetch_data_from_keycloak_and_dump_to_grist():
     dump_df_to_grist_table(api, grist_table_name, df)
 
     new_df = find_new_prospects(df, existing_df)
-    send_new_prospects_to_n8n(webhook_url, new_df)
